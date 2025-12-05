@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+.prose h2 {
+    @apply text-xl font-bold mt-4 mb-2 text-indigo-700;
+}
+.prose ul {
+    @apply list-disc list-inside ml-4;
+}
+.prose p {
+    @apply mb-2 text-gray-700 leading-relaxed;
+}
