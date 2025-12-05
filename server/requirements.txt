@@ -11,3 +11,6 @@ python-dotenv
 langchain-mongodb
 pymongo
 motor
+aiofiles
+pydantic
+sentence-transformers

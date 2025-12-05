@@ -1,12 +1,20 @@
 import os
 from dotenv import load_dotenv
 
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))   # server/
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 DOTENV_PATH = os.path.join(BASE_DIR, ".env")
 load_dotenv(dotenv_path=DOTENV_PATH)
 
+DOTENV_PATH = DOTENV_PATH
+# Directories for data storage
+VECTOR_DB_DIR = "data/vector_db"
+UPLOAD_DIR = "data/uploads"
+
+# Gemini AI configuration
 GEMINAI_API_KEY = os.getenv("GEMINAI_API_KEY")
 GEMINAI_MODEL = os.getenv("GEMINAI_MODEL")
+EMBEDDING_MODEL = "models/embedding-001"
 
+# MongoDB configuration
 MONGO_URI = os.getenv("MONGO_URI")
 MONGO_DB_NAME = os.getenv("MONGO_DB_NAME")
