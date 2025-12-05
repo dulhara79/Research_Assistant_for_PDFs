@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+python-multipart
+langchain-google-genai
+langchain-community
+langchain
+langchain-chroma
+chromadb
+pypdf
+python-dotenv
+langchain-mongodb
+pymongo
+motor
