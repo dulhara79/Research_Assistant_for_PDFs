@@ -8,9 +8,9 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 # from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
-from server.utils.config import BASE_DIR, VECTOR_DB_DIR, EMBEDDING_MODEL, GEMINAI_API_KEY
+from server.utils.config import UPLOAD_DIR, VECTOR_DB_DIR, EMBEDDING_MODEL, GEMINAI_API_KEY
 
-os.makedirs(BASE_DIR, exist_ok=True)
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(VECTOR_DB_DIR, exist_ok=True)
 
 def sanitize_filename(filename: str):
@@ -25,7 +25,7 @@ def get_embeddings():
 async def save_pdf_file(file: UploadFile) -> tuple[str, str]:
     pdf_id = str(uuid4())
     safe_filename = sanitize_filename(file.filename)
-    file_path = os.path.join(BASE_DIR, f"{pdf_id}_{safe_filename}")
+    file_path = os.path.join(UPLOAD_DIR, f"{pdf_id}_{safe_filename}")
 
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
