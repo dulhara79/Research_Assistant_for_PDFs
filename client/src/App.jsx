@@ -35,7 +35,7 @@ function App() {
     formData.append("file", file);
 
     try {
-      const response = await axios.post(`${API_URL}/upload`, formData, {
+      const response = await axios.post(`${API_URL}/api/upload`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
@@ -59,7 +59,7 @@ function App() {
     setChatHistory(prev => [...prev, { role: 'user', content: currentQuestion }]);
 
     try {
-      const response = await axios.post(`${API_URL}/chat`, {
+      const response = await axios.post(`${API_URL}/api/chat`, {
         session_id: sessionId,
         question: currentQuestion
       });
