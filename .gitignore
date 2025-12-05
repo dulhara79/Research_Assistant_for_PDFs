@@ -252,12 +252,4 @@ desktop.ini
 *.bak
 *.swp
 *~
-data/vector_db/chroma.sqlite3
-data/vector_db/1e925ffc-bead-4b8d-9519-3e793358ec05/length.bin
-data/vector_db/1e925ffc-bead-4b8d-9519-3e793358ec05/link_lists.bin
-data/vector_db/1e925ffc-bead-4b8d-9519-3e793358ec05/header.bin
-data/vector_db/1e925ffc-bead-4b8d-9519-3e793358ec05/data_level0.bin
-data/vector_db/18c521d6-43da-484d-8031-c5dca48931c3/link_lists.bin
-data/vector_db/18c521d6-43da-484d-8031-c5dca48931c3/length.bin
-data/vector_db/18c521d6-43da-484d-8031-c5dca48931c3/header.bin
-data/vector_db/18c521d6-43da-484d-8031-c5dca48931c3/data_level0.bin
+data/
