@@ -205,3 +205,50 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Node / JavaScript
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.pnpm-store/
+
+# Vite / client (frontend)
+client/node_modules/
+client/dist/
+client/.vite/
+client/.parcel-cache/
+client/.turbo/
+client/.env
+client/.env.local
+client/.env.*.local
+client/package-lock.json
+
+# Build outputs and coverage
+dist/
+build/
+out/
+coverage/
+htmlcov/
+
+# Logs
+logs/
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDEs and editors
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Temporary files
+*.tgz
+*.bak
+*.swp
+*~
