@@ -120,11 +120,4 @@ Contributing
 
 License
 - This repository includes a `LICENSE` file at the root.
-
-Contact / Next steps
-- If you'd like, I can:
-  - Add a sample `server/.env.example` file to the repo
-  - Add startup scripts (PowerShell `.ps1`) for easier local bootstrapping
-  - Create a short CONTRIBUTING.md with commit and PR guidelines
-
 ---
