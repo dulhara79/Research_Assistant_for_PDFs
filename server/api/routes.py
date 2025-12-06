@@ -1,3 +1,4 @@
+import re
 from fastapi import APIRouter, UploadFile, File, HTTPException, BackgroundTasks
 from server.schemas.QuestionSchema import QuestionSchema
 from server.schemas.AnswerSchema import AnswerSchema
@@ -28,8 +29,17 @@ async def upload_pdf(file: UploadFile = File(...)):
         summary_text = generate_structured_summary(file_path)
         print("filepath passed")
 
+        match = re.search(r"\*\*Title:\*\*\s*(.*)", summary_text)
+        if match:
+            title = match.group(1).strip()
+        else:
+            title = "Unknown Title"
+
+        QuestionSchema(pdf_id=pdf_id, question="")
+
         return SummarySchema(
             pdf_id=pdf_id,
+            title = title,
             file_name=file.filename,
             summary=summary_text
         )
@@ -47,6 +57,9 @@ async def chat_with_pdf(request: QuestionSchema):
         if not clean_question:
             raise HTTPException(status_code=400, detail="Question cannot be empty")
 
+        if not request.pdf_id:
+            return {"error": "pdf_id is missing"}
+
         # Get History
         history = await get_chat_history(request.pdf_id)
         print("Chat history retrieved:", history)
@@ -55,6 +68,7 @@ async def chat_with_pdf(request: QuestionSchema):
         result = get_answer_from_pdf(clean_question, request.pdf_id, history)
         print("Answer retrieved:", result)
         answer_text = result['result']
+        source_documents = result['source_documents']
         print("Final answer text:", answer_text)
 
         # Save to DB (User query)
@@ -67,7 +81,7 @@ async def chat_with_pdf(request: QuestionSchema):
 
         return AnswerSchema(
             answer=answer_text,
-            source_documents=[doc.page_content[:100] + "..." for doc in result.get('source_documents', [])]
+            source_documents=source_documents
         )
 
     except Exception as e:

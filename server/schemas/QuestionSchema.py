@@ -3,4 +3,4 @@ from typing import Optional
 
 class QuestionSchema(BaseModel):
     question: str
-    pdf_id: Optional[str] = None
+    pdf_id: str
