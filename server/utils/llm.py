@@ -3,7 +3,7 @@ import glob
 from langchain_core.runnables import RunnablePassthrough
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import PromptTemplate
-from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PyMuPDFLoader
 from server.utils.PDFProcess import get_vector_store
 from server.utils.config import GEMINAI_MODEL, GEMINAI_API_KEY, UPLOAD_DIR
 
@@ -15,7 +15,7 @@ llm = ChatGoogleGenerativeAI(
 )
 
 def generate_structured_summary(file_path: str) -> str:
-    loader = PyPDFLoader(file_path)
+    loader = PyMuPDFLoader(file_path)
     docs = loader.load()
 
     template = """
@@ -190,7 +190,7 @@ def get_answer_from_pdf(question: str, pdf_id: str, chat_history: list):
 
         if files:
             file_path = files[0]
-            loader = PyPDFLoader(file_path)
+            loader = PyMuPDFLoader(file_path)
             # Load the first 2 pages (in case Title is on page 2 or cover sheet exists)
             pages = loader.load()
 
