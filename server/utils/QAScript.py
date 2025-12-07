@@ -21,7 +21,9 @@ def evaluate_response(question: str, context: str, answer: str):
 
     eval_template = """
         You are a strict QA evaluator for a RAG system.
-
+        
+        **IMPORTANT: Limit your answer to 1000 words.**
+        
         Your task is to analyze the following components:
         1. **User Question**: {question}
         2. **Retrieved Context**: {context}
