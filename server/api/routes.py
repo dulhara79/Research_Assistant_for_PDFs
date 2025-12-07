@@ -14,6 +14,7 @@ from server.utils.chatHistory import save_chat_message, get_chat_history
 
 router = APIRouter()
 
+# ScholarSense
 
 @router.post("/upload", response_model=SummarySchema)
 async def upload_pdf(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
@@ -115,3 +116,54 @@ async def chat_with_pdf(request: QuestionSchema, current_user: dict = Depends(ge
     except Exception as e:
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/documents")
+async def get_user_documents(current_user: dict = Depends(get_current_user)):
+    try:
+        cursor = db_instance.db["pdfs"].find({
+            "user_id": current_user["_id"]
+        }).sort("created_at", -1)
+
+        documents = []
+        async for doc in cursor:
+            documents.append({
+                "pdf_id": doc["pdf_id"],
+                "title": doc["title"],
+                "file_name": doc["filename"],
+                "summary": doc["summary"],
+                "created_at": doc["created_at"]
+            })
+
+        return documents
+    except Exception as e:
+        print(f"[ERROR] Fetching docs:{e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/history/{pdf_id}")
+async def get_history_by_id(pdf_id: str, current_user: dict = Depends(get_current_user)):
+    pdf_record = await db_instance.db["pdfs"].find_one({
+        "pdf_id": pdf_id,
+        "user_id": current_user["_id"]
+    })
+
+    if not pdf_record:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have access to this PDF document."
+        )
+
+    history = await get_chat_history(pdf_id)
+
+    formatted_history = []
+    for msg in history:
+        if msg['role'] != 'system':
+            formatted_history.append({
+                "role": "bot" if msg['role'] == "assistant" else "user",
+                "content": msg["message"]
+            })
+
+    return {
+        "pdf_id": pdf_id,
+        "title": pdf_record.get("title"),
+        "history": formatted_history
+    }
