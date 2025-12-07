@@ -3,7 +3,7 @@ import re
 import shutil
 from uuid import uuid4
 from fastapi import UploadFile
-from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 # from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_community.embeddings import HuggingFaceEmbeddings
@@ -34,7 +34,7 @@ async def save_pdf_file(file: UploadFile) -> tuple[str, str]:
 
 
 def process_pdf_to_vector_db(file_path: str, pdf_id: str):
-    loader = PyPDFLoader(file_path)
+    loader = PyMuPDFLoader(file_path)
     docs = loader.load()
 
     text_splitter = RecursiveCharacterTextSplitter(

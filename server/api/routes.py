@@ -16,18 +16,18 @@ async def upload_pdf(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Only PDF files are allowed")
 
     try:
-        print("inside try block")
+        print("[DEBUG] inside try block")
         # 1. Save File
         pdf_id, file_path = await save_pdf_file(file)
-        print(f"file_path: {file_path} & pdf_id: {pdf_id}")
+        print(f"[DEBUG] file_path: {file_path} & pdf_id: {pdf_id}")
         # 2. Process Vectors (Compute intensive - strictly, should be background task,
         # but for this assignment we await to ensure RAG is ready immediately)
         process_pdf_to_vector_db(file_path, pdf_id)
 
-        print("after process_pdf_to_vector_db")
+        print("[DEBUG] after process_pdf_to_vector_db")
         # 3. Generate Summary
         summary_text = generate_structured_summary(file_path)
-        print("filepath passed")
+        print("[DEBUG] filepath passed")
 
         match = re.search(r"\*\*Title:\*\*\s*(.*)", summary_text)
         if match:
@@ -51,7 +51,7 @@ async def upload_pdf(file: UploadFile = File(...)):
 @router.post("/chat", response_model=AnswerSchema)
 async def chat_with_pdf(request: QuestionSchema):
     try:
-        print("Received question:", request.question)
+        print("[DEBUG] Received question:", request.question)
         # Sanitize input (basic)
         clean_question = request.question.strip()
         if not clean_question:
@@ -62,22 +62,22 @@ async def chat_with_pdf(request: QuestionSchema):
 
         # Get History
         history = await get_chat_history(request.pdf_id)
-        print("Chat history retrieved:", history)
+        print("[DEBUG] Chat history retrieved:", history)
 
         # Get RAG Answer
         result = get_answer_from_pdf(clean_question, request.pdf_id, history)
-        print("Answer retrieved:", result)
+        print("[DEBUG] Answer retrieved:", result)
         answer_text = result['result']
         source_documents = result['source_documents']
-        print("Final answer text:", answer_text)
+        print("[DEBUG] Final answer text:", answer_text)
 
         # Save to DB (User query)
         await save_chat_message(request.pdf_id, "user", clean_question)
-        print("Chat message saved")
+        print("[DEBUG] Chat message saved")
 
         # Save to DB (AI Response)
         await save_chat_message(request.pdf_id, "assistant", answer_text)
-        print("AI response saved")
+        print("[DEBUG] AI response saved")
 
         return AnswerSchema(
             answer=answer_text,
