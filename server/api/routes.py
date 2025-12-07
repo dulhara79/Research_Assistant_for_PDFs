@@ -1,9 +1,14 @@
+from datetime import datetime
 import re
-from fastapi import APIRouter, UploadFile, File, HTTPException, BackgroundTasks
+from fastapi import APIRouter, UploadFile, File, HTTPException, BackgroundTasks, status
+from fastapi.params import Depends
+
 from server.schemas.QuestionSchema import QuestionSchema
 from server.schemas.AnswerSchema import AnswerSchema
 from server.schemas.SummarySchema import SummarySchema
 from server.utils.PDFProcess import save_pdf_file, process_pdf_to_vector_db
+from server.utils.auth import get_current_user
+from server.utils.db import db_instance
 from server.utils.llm import generate_structured_summary, get_answer_from_pdf
 from server.utils.chatHistory import save_chat_message, get_chat_history
 
@@ -11,7 +16,7 @@ router = APIRouter()
 
 
 @router.post("/upload", response_model=SummarySchema)
-async def upload_pdf(file: UploadFile = File(...)):
+async def upload_pdf(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
     if not file.filename.endswith('.pdf'):
         raise HTTPException(status_code=400, detail="Only PDF files are allowed")
 
@@ -35,11 +40,23 @@ async def upload_pdf(file: UploadFile = File(...)):
         else:
             title = "Unknown Title"
 
+        pdf_document = {
+            "pdf_id": pdf_id,
+            "user_id": current_user["_id"],
+            "filename": file.filename,
+            "title": title,
+            "summary": summary_text,
+            "created_at": datetime.utcnow()
+        }
+
+        await db_instance.db["pdfs"].insert_one(pdf_document)
+        print("[DEBUG] PDF document inserted into DB")
+
         QuestionSchema(pdf_id=pdf_id, question="")
 
         return SummarySchema(
             pdf_id=pdf_id,
-            title = title,
+            title=title,
             file_name=file.filename,
             summary=summary_text
         )
@@ -49,7 +66,7 @@ async def upload_pdf(file: UploadFile = File(...)):
 
 
 @router.post("/chat", response_model=AnswerSchema)
-async def chat_with_pdf(request: QuestionSchema):
+async def chat_with_pdf(request: QuestionSchema, current_user: dict = Depends(get_current_user)):
     try:
         print("[DEBUG] Received question:", request.question)
         # Sanitize input (basic)
@@ -59,6 +76,17 @@ async def chat_with_pdf(request: QuestionSchema):
 
         if not request.pdf_id:
             return {"error": "pdf_id is missing"}
+
+        pdf_record = await db_instance.db["pdfs"].find_one({
+            "pdf_id": request.pdf_id,
+            "user_id": current_user["_id"]
+        })
+
+        if not pdf_record:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have access to this PDF document."
+            )
 
         # Get History
         history = await get_chat_history(request.pdf_id)
