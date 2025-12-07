@@ -10,7 +10,7 @@ from server.utils.PDFProcess import save_pdf_file, process_pdf_to_vector_db
 from server.utils.auth import get_current_user
 from server.utils.db import db_instance
 from server.utils.llm import generate_structured_summary, get_answer_from_pdf
-from server.utils.chatHistory import save_chat_message, get_chat_history
+from server.utils.chatHistory import save_chat_message, get_chat_history, clear_chat_history
 
 router = APIRouter()
 
@@ -167,3 +167,26 @@ async def get_history_by_id(pdf_id: str, current_user: dict = Depends(get_curren
         "title": pdf_record.get("title"),
         "history": formatted_history
     }
+
+@router.delete("/document/{pdf_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_document(pdf_id: str, current_user: dict = Depends(get_current_user)):
+    try:
+        pdf_record = await db_instance.db["pdfs"].find_one({
+            "pdf_id": pdf_id,
+            "user_id": current_user["_id"]
+        })
+
+        if not pdf_record:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have access to this PDF document."
+            )
+
+        await clear_chat_history(pdf_id)
+
+        await db_instance.db["pdfs"].delete_one({"pdf_id": pdf_id, "user_id": current_user["_id"]})
+
+        return None
+    except Exception as e:
+        print(f"[ERROR] Deleting document:{e}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete document: {e}")
