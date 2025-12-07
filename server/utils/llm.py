@@ -22,6 +22,8 @@ def generate_structured_summary(file_path: str) -> str:
     template = """
     You are an expert academic researcher. Your task is to read the provided research paper 
     content and generate a structured summary following the required format.
+    
+    **IMPORTANT: Limit your answer to 1000 words.**
 
     Strictly follow this structure:
 
@@ -138,6 +140,7 @@ def get_answer_from_pdf(question: str, pdf_id: str, chat_history: list):
         2. If the answer is found in the Metadata section, state it clearly.
         3. If the answer is not in the context, say "I cannot find the answer."
         4. Do NOT hallucinate.
+        5. Limit your answer to 1000 words.
 
         {feedback_section}
 
