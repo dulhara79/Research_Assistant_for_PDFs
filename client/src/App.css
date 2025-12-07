@@ -1,6 +1,34 @@
  @import "tailwindcss";
 
-/* Animations */
+/* =========================================
+   1. GLOBAL RESET & SCROLLBAR
+   ========================================= */
+@layer base {
+  body {
+    @apply bg-slate-950 text-slate-100 antialiased selection:bg-indigo-500/30 selection:text-indigo-200;
+  }
+
+  /* Smooth Scrolling for the whole html */
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-slate-950;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-800 rounded-full border border-slate-900 hover:bg-slate-700 transition-colors;
+}
+
+/* =========================================
+   2. ANIMATIONS
+   ========================================= */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -16,94 +44,139 @@
   to { transform: translateY(0); opacity: 1; }
 }
 
-@keyframes pulse-custom {
+@keyframes pulse-soft {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  50% { opacity: 0.7; }
 }
 
-/* Utility Classes */
-.animate-fadeIn { animation: fadeIn 0.2s ease-out; }
-.animate-slideUp { animation: slideUp 0.3s ease-out; }
-.animate-slideDown { animation: slideDown 0.3s ease-out; }
-.animate-pulse-custom { animation: pulse-custom 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+/* Animation Utilities */
+.animate-fadeIn { animation: fadeIn 0.3s ease-out forwards; }
+.animate-slideUp { animation: slideUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+.animate-slideDown { animation: slideDown 0.3s ease-out forwards; }
+.animate-pulse-soft { animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
 
-.chat-message {
-  animation: slideUp 0.3s ease-out;
+/* =========================================
+   3. COMPONENT UTILITIES
+   ========================================= */
+@layer components {
+  
+  /* Modern Glass Effect (Dark Mode Optimized) */
+  .glass-panel {
+    @apply bg-slate-900/60 backdrop-blur-md border border-slate-800/60 shadow-xl;
+  }
+
+  /* Interactive Elements */
+  .file-upload-area {
+    @apply transition-all duration-300 ease-out border-2 border-dashed border-slate-700 bg-slate-900/30;
+  }
+  .file-upload-area:hover {
+    @apply border-indigo-500/50 bg-slate-800/50 -translate-y-1;
+  }
+
+  /* Glow Effects */
+  .glow-border {
+    @apply transition-shadow duration-300;
+    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.1), 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+  }
+  .glow-border:hover {
+    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.4), 0 0 15px rgba(99, 102, 241, 0.2);
+  }
 }
 
-.file-upload-area {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.file-upload-area:hover {
-  transform: translateY(-2px);
-}
-
-.glass-effect {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-}
-
-.glow-border {
-  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.1), 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-}
-
-.glow-border:hover {
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2), 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-}
-
-/* --- MARKDOWN SUMMARY STYLES --- */
+/* =========================================
+   4. MARKDOWN TYPOGRAPHY (DARK MODE)
+   ========================================= */
+/* These styles target the AI response text.
+   Colors have been inverted to look good on slate-950. 
+*/
 .markdown-body {
   font-family: 'Inter', sans-serif;
-  color: #334155;
-  line-height: 1.7;
+  color: #cbd5e1; /* slate-300 */
+  line-height: 1.75;
+  font-size: 1rem;
 }
 
+/* Headings */
 .markdown-body h1, 
 .markdown-body h2, 
 .markdown-body h3 {
-  color: #1e293b;
+  color: #f1f5f9; /* slate-100 */
   font-weight: 700;
-  margin-top: 1.5em;
-  margin-bottom: 0.5em;
+  margin-top: 2em;
+  margin-bottom: 0.75em;
   line-height: 1.3;
 }
 
-.markdown-body h1 { font-size: 1.5rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.3em; }
-.markdown-body h2 { font-size: 1.25rem; }
-.markdown-body h3 { font-size: 1.1rem; }
+.markdown-body h1 { 
+  font-size: 1.75rem; 
+  border-bottom: 1px solid #334155; /* slate-700 */
+  padding-bottom: 0.3em; 
+}
+.markdown-body h2 { font-size: 1.4rem; }
+.markdown-body h3 { font-size: 1.15rem; color: #e2e8f0; }
 
-.markdown-body p { margin-bottom: 1em; }
+/* Paragraphs & Lists */
+.markdown-body p { margin-bottom: 1.25em; }
 
 .markdown-body ul, 
 .markdown-body ol {
   margin-left: 1.5em;
-  margin-bottom: 1em;
-  list-style-type: disc;
+  margin-bottom: 1.25em;
+  color: #cbd5e1;
 }
-
+.markdown-body ul { list-style-type: disc; }
+.markdown-body ol { list-style-type: decimal; }
 .markdown-body li { margin-bottom: 0.5em; padding-left: 0.2em; }
 
+/* Emphasis */
 .markdown-body strong {
-  color: #4f46e5; /* Indigo color for key terms */
+  color: #818cf8; /* indigo-400 */
   font-weight: 600;
 }
 
+/* Blockquotes */
 .markdown-body blockquote {
-  border-left: 4px solid #6366f1;
-  background-color: #f8fafc;
-  padding: 0.5em 1em;
+  border-left: 4px solid #6366f1; /* indigo-500 */
+  background-color: #1e293b; /* slate-800 */
+  padding: 1em 1.5em;
+  color: #94a3b8; /* slate-400 */
   font-style: italic;
   margin: 1.5em 0;
   border-radius: 0 0.5rem 0.5rem 0;
 }
 
+/* Code Blocks & Inline Code */
 .markdown-body code {
-  background-color: #f1f5f9;
+  background-color: #1e293b; /* slate-800 */
   padding: 0.2em 0.4em;
   border-radius: 0.25rem;
-  font-family: monospace;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.85em;
+  color: #f472b6; /* pink-400 */
+}
+
+.markdown-body pre {
+  background-color: #0f172a; /* slate-900 */
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  border: 1px solid #334155;
+  margin-bottom: 1.5em;
+}
+
+.markdown-body pre code {
+  background-color: transparent;
+  color: #e2e8f0;
+  padding: 0;
   font-size: 0.9em;
-  color: #ef4444;
+}
+
+/* Links */
+.markdown-body a {
+  color: #818cf8;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.markdown-body a:hover {
+  color: #a5b4fc;
 }

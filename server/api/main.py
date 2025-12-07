@@ -6,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from sympy.codegen import Print
 
 from server.api.routes import router as api_router
+from server.api.userRoutes import router as user_router
 from server.utils.db import connect_to_mongo, close_mongoconnection
 from server.utils.config import DOTENV_PATH, GEMINAI_API_KEY, GEMINAI_MODEL, EMBEDDING_MODEL, MONGO_URI, MONGO_DB_NAME
 
@@ -40,15 +41,10 @@ os.makedirs("data", exist_ok=True)
 app.mount("/data", StaticFiles(directory="data"), name="data")
 
 app.include_router(api_router, prefix="/api")
+app.include_router(user_router, prefix="/api/auth")
 
 @app.get("/")
 def read_root():
-    print(f"Loaded .env from: {DOTENV_PATH}")
-    print(f"GEMINAI_API_KEY: {GEMINAI_API_KEY}")
-    print(f"GEMINAI_MODEL: {GEMINAI_MODEL}")
-    print(f"EMBEDDING_MODEL: {EMBEDDING_MODEL}")
-    print(f"MONGO_URI: {MONGO_URI}")
-    print(f"MONGO_DB_NAME: {MONGO_DB_NAME}")
     return {"message": "Research Assistant Backend is Running"}
 
 

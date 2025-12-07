@@ -14,3 +14,7 @@ motor
 aiofiles
 pydantic
 sentence-transformers
+pdfminer
+unstructured
+pymupdf
+pydantic[email]
