@@ -1,3 +1,4 @@
+from datetime import datetime
 from server.utils.db import db_instance
 
 
@@ -6,7 +7,8 @@ async def save_chat_message(pdf_id: str, role: str, message: str):
     await collection.insert_one({
         "pdf_id": pdf_id,
         "role": role,
-        "message": message
+        "message": message,
+        "timestamp": datetime.utcnow()
     })
 
 async def get_chat_history(pdf_id: str):
