@@ -1,3 +1,5 @@
+import random
+import string
 from datetime import datetime, timedelta
 from typing import Optional
 from passlib.context import CryptContext
@@ -46,3 +48,7 @@ def decrypt_message(encrypted_message: str):
     except Exception as e:
         print(f"[DEBUG] Decryption error: {e}")
         raise ValueError("Invalid Key or Corrupted Data")
+
+def generate_otp(length=6) -> str:
+    """Generate a random numeric OTP"""
+    return ''.join(random.choices(string.digits, k=length))

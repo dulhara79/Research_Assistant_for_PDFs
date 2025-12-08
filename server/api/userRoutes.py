@@ -1,18 +1,21 @@
-from fastapi import APIRouter, HTTPException, status, Depends
-from datetime import datetime
+from fastapi import APIRouter, HTTPException, status, Depends, BackgroundTasks
+from datetime import datetime, timedelta
 from bson import ObjectId
+from fastapi_mail import MessageSchema, MessageType, FastMail
 
 from server.utils.db import db_instance
 from server.schemas.UserSchema import (UserCreateSchema, UserOutputSchema, UserLoginSchema, TokenSchema,
-                                       UserUpdateSchema)
-from server.utils.security import get_password_hash, verify_password, create_access_token
+                                       UserUpdateSchema, OTPVerifySchema, OTPSendSchema)
+from server.utils.security import get_password_hash, verify_password, create_access_token, generate_otp
 from server.utils.auth import get_current_user, oauth2_scheme
+from server.utils.mailConfig import conf
 
 router = APIRouter(tags=["Authentication"])
 
 
-@router.post("/register", response_model=UserOutputSchema, status_code=status.HTTP_201_CREATED)
-async def register_user(user: UserCreateSchema):
+# @router.post("/register", response_model=UserOutputSchema, status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=dict, status_code=status.HTTP_201_CREATED)
+async def register_user(user: UserCreateSchema, background_tasks: BackgroundTasks):
     existing_user = await db_instance.db["users"].find_one({"email": user.email})
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -22,16 +25,35 @@ async def register_user(user: UserCreateSchema):
     user_dict["created_at"] = datetime.utcnow()
     user_dict["updated_at"] = datetime.utcnow()
 
-    new_user = await db_instance.db["users"].insert_one(user_dict)
+    # new_user = await db_instance.db["users"].insert_one(user_dict)
+    #
+    # created_user = await db_instance.db["users"].find_one({"_id": new_user.inserted_id})
+    # created_user["_id"] = str(created_user["_id"])
+    #
+    # return created_user
+    # Generate OTP immediately upon registration
+    otp_code = generate_otp()
+    user_dict["otp_code"] = otp_code
+    user_dict["otp_expires_at"] = datetime.utcnow() + timedelta(minutes=5)
 
-    created_user = await db_instance.db["users"].find_one({"_id": new_user.inserted_id})
-    created_user["_id"] = str(created_user["_id"])
+    await db_instance.db["users"].insert_one(user_dict)
 
-    return created_user
+    # 3. Send OTP Email
+    message = MessageSchema(
+        subject="Verify your account",
+        recipients=[user.email],
+        body=f"<h3>Welcome! Your verification code is:</h3> <h1>{otp_code}</h1>",
+        subtype=MessageType.html
+    )
+    fm = FastMail(conf)
+    background_tasks.add_task(fm.send_message, message)
+
+    return {"message": "User created. Check email for OTP."}
 
 
-@router.post("/login", response_model=TokenSchema)
-async def login_user(login_data: UserLoginSchema):
+# @router.post("/login", response_model=TokenSchema)
+@router.post("/login", response_model=dict)
+async def login_user(login_data: UserLoginSchema, background_tasks: BackgroundTasks):
     user = await db_instance.db["users"].find_one({"email": login_data.email})
 
     if not user or not verify_password(login_data.password, user["password"]):
@@ -42,8 +64,28 @@ async def login_user(login_data: UserLoginSchema):
         )
 
     # Create JWT
-    access_token = create_access_token(data={"sub": str(user["_id"])})
-    return {"access_token": access_token, "token_type": "bearer"}
+    # access_token = create_access_token(data={"sub": str(user["_id"])})
+    # return {"access_token": access_token, "token_type": "bearer"}
+
+    otp_code = generate_otp()
+    expiration_time = datetime.utcnow() + timedelta(minutes=5)
+
+    await db_instance.db["users"].update_one(
+        {"email": login_data.email},
+        {"$set": {"otp_code": otp_code, "otp_expires_at": expiration_time}}
+    )
+
+    # 3. Send Email
+    message = MessageSchema(
+        subject="Login OTP",
+        recipients=[login_data.email],
+        body=f"<h3>Your Login OTP is:</h3> <h1>{otp_code}</h1>",
+        subtype=MessageType.html
+    )
+    fm = FastMail(conf)
+    background_tasks.add_task(fm.send_message, message)
+
+    return {"message": "OTP sent to email"}
 
 
 @router.get("/me", response_model=UserOutputSchema)
@@ -91,3 +133,67 @@ async def update_user(
 async def delete_user(current_user: dict = Depends(get_current_user)):
     await db_instance.db["users"].delete_one({"_id": ObjectId(current_user["_id"])})
     return None
+
+@router.post("/send-otp", status_code=status.HTTP_200_OK)
+async def send_otp(otp_data: OTPSendSchema, background_tasks: BackgroundTasks):
+    email = otp_data.email
+
+    user = await db_instance.db["users"].find_one({"email": email})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    otp_code = generate_otp()
+
+    expiration_time = datetime.utcnow() + timedelta(minutes=5)
+
+    await db_instance.db["users"].update_one(
+        {"email": email},
+        {"$set": {
+            "otp": otp_code,
+            "otp_expiration": expiration_time
+        }}
+    )
+
+    message = MessageSchema(
+        subject="Your OTP Code",
+        recipients=[email],
+        body=f"<h3>Your One-Time Password is:</h3> <h1>{otp_code}</h1> <p>This code expires in 5 minutes.</p>",
+        subtype=MessageType.html
+    )
+
+    fm = FastMail(conf)
+    background_tasks.add_task(fm.send_message, message)
+
+    return {"message": "OTP sent successfully"}
+
+@router.post("/verify-otp", response_model=TokenSchema)
+async def verify_otp(otp_data: OTPVerifySchema):
+    user = await db_instance.db["users"].find_one({"email": otp_data.email})
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    stored_otp = user.get("otp_code")
+    expiry = user.get("otp_expires_at")
+
+    if not stored_otp or not expiry:
+        raise HTTPException(status_code=400, detail="No OTP requested")
+
+        # 3. Validate OTP and Expiry
+    if stored_otp != otp_data.otp:
+        raise HTTPException(status_code=400, detail="Invalid OTP")
+
+    if datetime.utcnow() > expiry:
+        raise HTTPException(status_code=400, detail="OTP has expired")
+
+    await db_instance.db["users"].update_one(
+        {"email": otp_data.email},
+        {"$unset": {"otp_code": "", "otp_expires_at": ""}}
+    )
+
+
+    access_token = create_access_token(data={"sub": str(user["_id"])})
+
+    return {"access_token": access_token, "token_type": "bearer"}
+
+
