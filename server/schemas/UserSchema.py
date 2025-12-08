@@ -33,6 +33,15 @@ class UserOutputSchema(BaseModel):
         populate_by_name = True
 
 
+class OTPSendSchema(BaseModel):
+    email: EmailStr
+
+
+class OTPVerifySchema(BaseModel):
+    email: EmailStr
+    otp: str
+
+
 class TokenSchema(BaseModel):
     access_token: str
     token_type: str = "bearer"
