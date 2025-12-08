@@ -19,3 +19,7 @@ unstructured
 pymupdf
 pydantic[email]
 fastapi_mail
+wikipedia
+duckduckgo-search
+langchain-tools
+ddgs
