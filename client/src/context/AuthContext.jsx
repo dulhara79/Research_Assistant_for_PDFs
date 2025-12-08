@@ -32,13 +32,22 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const { data } = await api.post("/auth/login", { email, password });
-    localStorage.setItem("token", data.access_token);
-    await checkUserLoggedIn();
+    // localStorage.setItem("token", data.access_token);
+    // await checkUserLoggedIn();
   };
 
   const register = async (userData) => {
     await api.post("/auth/register", userData);
-    await login(userData.email, userData.password);
+    console.log(`[DEBUG] Registered user Data: ${userData}`);
+    // await login(userData.email, userData.password);
+  };
+
+  const verifyOtp = async (email, otp) => {
+    const { data } = await api.post("/auth/verify-otp", { email, otp });
+    console.log(`[DEBUG] Verified OTP for data: ${data}`);
+    localStorage.setItem("token", data.access_token);
+    await checkUserLoggedIn(); 
+    navigate("/chat"); 
   };
 
   const logout = async () => {
@@ -55,7 +64,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, loading, verifyOtp }}>
       {!loading && children}
     </AuthContext.Provider>
   );
