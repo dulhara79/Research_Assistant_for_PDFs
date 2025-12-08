@@ -7,15 +7,15 @@ import Sidebar from "../components/chat/Sidebar"; // Ensure this is the updated 
 import SummaryPanel from "../components/chat/SummaryPanel"; // Ensure this is the updated version
 
 // Icons
-import { 
-  PanelLeftOpen, 
-  PanelRightOpen, 
-  Send, 
-  Bot, 
+import {
+  PanelLeftOpen,
+  PanelRightOpen,
+  Send,
+  Bot,
   User as UserIcon,
   Menu,
   UploadCloud,
-  Loader2
+  Loader2,
 } from "lucide-react";
 
 export default function ChatPage() {
@@ -32,7 +32,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState([]);
   const [summary, setSummary] = useState("");
   const [inputMessage, setInputMessage] = useState("");
-  
+
   // --- Loading States ---
   const [loading, setLoading] = useState(false); // For chat response
   const [uploading, setUploading] = useState(false); // For file upload
@@ -65,19 +65,20 @@ export default function ChatPage() {
     try {
       const res = await api.get(`/history/${pdfId}`);
       // Ensure backend history matches UI format (role: 'user'/'assistant')
-      const formattedHistory = (res.data.history || []).map(msg => ({
+      const formattedHistory = (res.data.history || []).map((msg) => ({
         ...msg,
-        role: msg.role === 'bot' ? 'assistant' : msg.role // Normalize 'bot' to 'assistant'
+        role: msg.role === "bot" ? "assistant" : msg.role, // Normalize 'bot' to 'assistant'
       }));
       setMessages(formattedHistory);
       setSummary(doc?.summary || "No summary available.");
-      
+
       // Auto-open summary on desktop when doc is selected
       if (window.innerWidth >= 1280) setIsSummaryOpen(true);
-      
     } catch (err) {
       console.error("Failed to load history", err);
-      setMessages([{ role: "assistant", content: "Failed to load chat history." }]);
+      setMessages([
+        { role: "assistant", content: "Failed to load chat history." },
+      ]);
     }
   };
 
@@ -86,7 +87,7 @@ export default function ChatPage() {
   const onFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    
+
     setUploading(true);
     const formData = new FormData();
     formData.append("file", file);
@@ -125,7 +126,7 @@ export default function ChatPage() {
 
     const currentQ = inputMessage;
     setInputMessage(""); // Clear input immediately
-    
+
     // Optimistic User Message
     setMessages((prev) => [...prev, { role: "user", content: currentQ }]);
     setLoading(true);
@@ -144,7 +145,10 @@ export default function ChatPage() {
     } catch (err) {
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "⚠️ Error getting response. Please try again." },
+        {
+          role: "assistant",
+          content: "⚠️ Error getting response. Please try again.",
+        },
       ]);
     } finally {
       setLoading(false);
@@ -153,12 +157,13 @@ export default function ChatPage() {
 
   // --- 5. Handle Delete ---
   const handleDeleteDocument = async (pdfId) => {
-    if (!window.confirm("Are you sure you want to delete this document?")) return;
+    if (!window.confirm("Are you sure you want to delete this document?"))
+      return;
 
     try {
       await api.delete(`/document/${pdfId}`);
-      setDocuments(docs => docs.filter(d => d.pdf_id !== pdfId));
-      
+      setDocuments((docs) => docs.filter((d) => d.pdf_id !== pdfId));
+
       if (activeDoc && activeDoc.pdf_id === pdfId) {
         setActiveDoc(null);
         setMessages([]);
@@ -176,203 +181,230 @@ export default function ChatPage() {
     fileInputRef.current?.click();
   };
 
-
   // --- RENDER ---
   return (
-    <div className="flex h-screen bg-slate-950 overflow-hidden relative text-slate-200 font-sans">
-      
-      {/* Hidden Input for File Upload */}
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        onChange={onFileChange} 
-        className="hidden" 
+    <div className="flex h-screen bg-slate-50 overflow-hidden relative text-slate-900 font-sans">
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={onFileChange}
+        className="hidden"
         accept="application/pdf"
       />
 
       {/* --- 1. LEFT SIDEBAR --- */}
+      {/* Ensure Sidebar component uses bg-white border-r border-slate-200 text-slate-700 */}
       <Sidebar
-        isOpen={isSidebarOpen} 
+        isOpen={isSidebarOpen}
         setIsOpen={setIsSidebarOpen}
         documents={documents}
         activeId={activeDoc?.pdf_id}
         onSelect={handleSelectDocument}
         onDelete={handleDeleteDocument}
-        onNewChat={handleNewChatClick} // Connects to hidden input
+        onNewChat={handleNewChatClick}
         userToken={user?.token}
       />
 
       {/* --- 2. MAIN CONTENT AREA --- */}
-      <main 
+      <main
         className={`
-          flex-1 flex flex-col h-full transition-all duration-300 ease-in-out
-          ${isSidebarOpen ? 'lg:ml-72' : 'lg:ml-0'} 
-          ${isSummaryOpen ? 'xl:mr-96' : 'xl:mr-0'}
+          flex-1 flex flex-col h-full transition-all duration-300 ease-in-out bg-white
+          ${isSidebarOpen ? "lg:ml-72" : "lg:ml-0"} 
+          ${isSummaryOpen ? "xl:mr-96" : "xl:mr-0"}
         `}
       >
-        
         {/* Header */}
-        <header className="h-16 border-b border-slate-800 flex items-center justify-between px-4 bg-slate-900/50 backdrop-blur-sm sticky top-0 z-10">
-           
-           <div className="flex items-center gap-3">
-             {/* Toggle Sidebar Button */}
-             {!isSidebarOpen && (
-               <button 
-                 onClick={() => setIsSidebarOpen(true)}
-                 className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"
-                 title="Open Sidebar"
-               >
-                 <PanelLeftOpen className="w-5 h-5" />
-               </button>
-             )}
-             
-             {/* Mobile Menu Button */}
-             <button 
-                className="lg:hidden p-2 text-slate-400"
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-             >
-                <Menu className="w-6 h-6" />
-             </button>
+        <header className="h-16 border-b border-slate-200 flex items-center justify-between px-4 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+          <div className="flex items-center gap-3">
+            {!isSidebarOpen && (
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-indigo-600 transition-colors"
+                title="Open Sidebar"
+              >
+                <PanelLeftOpen className="w-5 h-5" />
+              </button>
+            )}
 
-             <h1 className="font-medium text-slate-200 truncate max-w-[200px] md:max-w-md">
-               {activeDoc?.title || "Select a document"}
-             </h1>
-           </div>
+            <button
+              className="lg:hidden p-2 text-slate-500"
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            >
+              <Menu className="w-6 h-6" />
+            </button>
 
-           {/* Toggle Summary Button */}
-           <div className="flex items-center">
-             {!isSummaryOpen && activeDoc && (
-               <button 
-                 onClick={() => setIsSummaryOpen(true)}
-                 className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20 rounded-lg border border-indigo-500/20 transition-all"
-               >
-                 <PanelRightOpen className="w-4 h-4" />
-                 <span className="hidden sm:inline">View Summary</span>
-               </button>
-             )}
-           </div>
+            <h1 className="font-semibold text-slate-800 truncate max-w-[200px] md:max-w-md">
+              {activeDoc?.title || "Select a document"}
+            </h1>
+          </div>
+
+          {/* Toggle Summary Button */}
+          <div className="flex items-center">
+            {!isSummaryOpen && activeDoc && (
+              <button
+                onClick={() => setIsSummaryOpen(true)}
+                className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg border border-indigo-200 transition-all"
+              >
+                <PanelRightOpen className="w-4 h-4" />
+                <span className="hidden sm:inline">View Summary</span>
+              </button>
+            )}
+          </div>
         </header>
 
         {/* Chat Messages Area */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar scroll-smooth">
-           {!activeDoc ? (
-             // --- EMPTY STATE / WELCOME SCREEN ---
-             <div className="h-full flex flex-col items-center justify-center text-slate-500 space-y-6">
-                <div className="w-20 h-20 bg-slate-800/50 rounded-full flex items-center justify-center mb-4">
-                    {uploading ? (
-                         <Loader2 className="w-10 h-10 text-indigo-500 animate-spin" />
-                    ) : (
-                         <UploadCloud className="w-10 h-10 text-slate-400" />
-                    )}
+        <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar scroll-smooth bg-slate-50/50">
+          {!activeDoc ? (
+            // --- EMPTY STATE / WELCOME SCREEN ---
+            <div className="h-full flex flex-col items-center justify-center text-slate-500 space-y-6">
+              <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm border border-slate-200">
+                {uploading ? (
+                  <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
+                ) : (
+                  <UploadCloud className="w-10 h-10 text-slate-400" />
+                )}
+              </div>
+              <h2 className="text-xl font-semibold text-slate-800">
+                {uploading ? "Analyzing Document..." : "Start Your Research"}
+              </h2>
+              <p className="max-w-md text-center text-sm text-slate-500">
+                {uploading
+                  ? "Please wait while we process your PDF and generate a summary."
+                  : "Upload a PDF document to generate a summary and start chatting with our AI assistant."}
+              </p>
+              {!uploading && (
+                <button
+                  onClick={handleNewChatClick}
+                  className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-all shadow-lg shadow-indigo-200"
+                >
+                  Upload PDF
+                </button>
+              )}
+            </div>
+          ) : (
+            // --- CHAT MESSAGES ---
+            <>
+              {messages.length === 0 && !loading && (
+                <div className="flex flex-col items-center justify-center py-10 opacity-50">
+                  <Bot className="w-12 h-12 mb-2 text-slate-400" />
+                  <p className="text-slate-500">
+                    Ask a question about this document.
+                  </p>
                 </div>
-                <h2 className="text-xl font-semibold text-slate-300">
-                    {uploading ? "Analyzing Document..." : "Start Your Research"}
-                </h2>
-                <p className="max-w-md text-center text-sm">
-                    {uploading 
-                        ? "Please wait while we process your PDF and generate a summary."
-                        : "Upload a PDF document to generate a summary and start chatting with our AI assistant."
-                    }
-                </p>
-                {!uploading && (
-                    <button 
-                        onClick={handleNewChatClick}
-                        className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-all shadow-lg shadow-indigo-500/20"
-                    >
-                        Upload PDF
-                    </button>
-                )}
-             </div>
-           ) : (
-             // --- CHAT MESSAGES ---
-             <>
-                {messages.length === 0 && !loading && (
-                    <div className="flex flex-col items-center justify-center py-10 opacity-50">
-                        <Bot className="w-12 h-12 mb-2" />
-                        <p>Ask a question about this document.</p>
-                    </div>
-                )}
-                
-                {messages.map((msg, index) => (
-                    <div 
-                        key={index} 
-                        className={`flex gap-4 max-w-3xl mx-auto ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
-                    >
-                        {/* Avatar */}
-                        <div className={`
-                        w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0
-                        ${msg.role === 'user' ? 'bg-indigo-600' : 'bg-slate-700'}
-                        `}>
-                            {msg.role === 'user' ? <UserIcon className="w-5 h-5" /> : <Bot className="w-5 h-5" />}
-                        </div>
+              )}
 
-                        {/* Bubble */}
-                        <div className={`
-                        p-4 rounded-2xl text-sm leading-relaxed
-                        ${msg.role === 'user' 
-                            ? 'bg-indigo-600/20 text-indigo-100 border border-indigo-500/20 rounded-tr-sm' 
-                            : 'bg-slate-800 text-slate-300 border border-slate-700 rounded-tl-sm'}
-                        `}>
-                            {msg.content}
-                        </div>
-                    </div>
-                ))}
+              {messages.map((msg, index) => (
+                <div
+                  key={index}
+                  className={`flex gap-4 max-w-3xl mx-auto ${
+                    msg.role === "user" ? "flex-row-reverse" : ""
+                  }`}
+                >
+                  {/* Avatar */}
+                  <div
+                    className={`
+                        w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm
+                        ${
+                          msg.role === "user"
+                            ? "bg-indigo-600 text-white"
+                            : "bg-white border border-slate-200 text-indigo-600"
+                        }
+                        `}
+                  >
+                    {msg.role === "user" ? (
+                      <UserIcon className="w-5 h-5" />
+                    ) : (
+                      <Bot className="w-5 h-5" />
+                    )}
+                  </div>
 
-                {/* Loading Indicator for Chat */}
-                {loading && (
-                   <div className="flex gap-4 max-w-3xl mx-auto">
-                        <div className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center flex-shrink-0">
-                            <Bot className="w-5 h-5" />
-                        </div>
-                        <div className="bg-slate-800 p-4 rounded-2xl rounded-tl-sm border border-slate-700">
-                             <div className="flex gap-1">
-                                <span className="w-2 h-2 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                                <span className="w-2 h-2 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                                <span className="w-2 h-2 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                             </div>
-                        </div>
-                   </div>
-                )}
-             </>
-           )}
+                  {/* Bubble */}
+                  <div
+                    className={`
+                        p-4 rounded-2xl text-sm leading-relaxed shadow-sm
+                        ${
+                          msg.role === "user"
+                            ? "bg-indigo-600 text-white rounded-tr-sm"
+                            : "bg-white text-slate-700 border border-slate-200 rounded-tl-sm"
+                        }
+                        `}
+                  >
+                    {msg.content}
+                  </div>
+                </div>
+              ))}
+
+              {/* Loading Indicator for Chat */}
+              {loading && (
+                <div className="flex gap-4 max-w-3xl mx-auto">
+                  <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center flex-shrink-0">
+                    <Bot className="w-5 h-5 text-indigo-600" />
+                  </div>
+                  <div className="bg-white p-4 rounded-2xl rounded-tl-sm border border-slate-200 shadow-sm">
+                    <div className="flex gap-1">
+                      <span
+                        className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"
+                        style={{ animationDelay: "0ms" }}
+                      />
+                      <span
+                        className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"
+                        style={{ animationDelay: "150ms" }}
+                      />
+                      <span
+                        className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"
+                        style={{ animationDelay: "300ms" }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         {/* Chat Input Area */}
         {activeDoc && (
-            <div className="p-4 border-t border-slate-800 bg-slate-900/30">
-            <form onSubmit={handleSendMessage} className="max-w-3xl mx-auto relative">
-                <input
-                    type="text"
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
-                    placeholder={loading ? "Waiting for response..." : "Ask about your document..."}
-                    disabled={loading}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl pl-4 pr-12 py-3.5 text-sm text-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-lg disabled:opacity-50"
-                />
-                <button 
-                    type="submit"
-                    disabled={!inputMessage.trim() || loading}
-                    className="absolute right-2 top-2 p-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                >
-                    <Send className="w-4 h-4" />
-                </button>
+          <div className="p-4 border-t border-slate-200 bg-white">
+            <form
+              onSubmit={handleSendMessage}
+              className="max-w-3xl mx-auto relative"
+            >
+              <input
+                type="text"
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                placeholder={
+                  loading
+                    ? "Waiting for response..."
+                    : "Ask about your document..."
+                }
+                disabled={loading}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-4 pr-12 py-3.5 text-sm text-slate-900 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all shadow-sm disabled:opacity-50"
+              />
+              <button
+                type="submit"
+                disabled={!inputMessage.trim() || loading}
+                className="absolute right-2 top-2 p-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                <Send className="w-4 h-4" />
+              </button>
             </form>
-            <p className="text-center text-xs text-slate-500 mt-2">
-                ScholarSense can make mistakes. Consider checking important information.
+            <p className="text-center text-xs text-slate-400 mt-2">
+              ScholarSense can make mistakes. Consider checking important
+              information.
             </p>
-            </div>
+          </div>
         )}
-
       </main>
 
       {/* --- 3. RIGHT SUMMARY PANEL --- */}
-      <SummaryPanel 
+      {/* Ensure SummaryPanel uses bg-white, border-l border-slate-200 */}
+      <SummaryPanel
         isOpen={isSummaryOpen}
         onClose={() => setIsSummaryOpen(false)}
         summary={summary}
         title={activeDoc?.title}
       />
-
     </div>
   );
 }
