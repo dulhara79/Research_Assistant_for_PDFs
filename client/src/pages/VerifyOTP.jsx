@@ -37,11 +37,17 @@ export default function VerifyOTP() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-950 p-4">
-      <div className="w-full max-w-md bg-slate-900/50 p-8 rounded-2xl border border-slate-800">
-        <h2 className="text-2xl font-bold text-white mb-4">Check your Email</h2>
-        <p className="text-slate-400 mb-6">
-          We sent a code to <span className="text-white">{email}</span>
+<div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+      
+      {/* Card: bg-white, border-slate-200, shadow-xl */}
+      <div className="w-full max-w-md bg-white p-8 rounded-2xl border border-slate-200 shadow-xl">
+        
+        {/* Heading: text-slate-900 */}
+        <h2 className="text-2xl font-bold text-slate-900 mb-4">Check your Email</h2>
+        
+        {/* Paragraph: text-slate-600 */}
+        <p className="text-slate-600 mb-6">
+          We sent a code to <span className="font-semibold text-slate-900">{email}</span>
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -51,7 +57,14 @@ export default function VerifyOTP() {
             value={otp}
             onChange={(e) => setOtp(e.target.value)}
           />
-          {error && <div className="text-red-400 text-sm">{error}</div>}
+          
+          {/* Error: Red background box for visibility */}
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-sm">
+              {error}
+            </div>
+          )}
+          
           <Button type="submit" isLoading={loading} className="w-full">
             Verify & Enter Chat
           </Button>

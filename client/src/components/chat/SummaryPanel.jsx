@@ -17,11 +17,11 @@ export default function SummaryPanel({
     const maxLineWidth = pageWidth - margin * 2;
     let yPos = margin;
 
-    const colorPrimary = [79, 70, 229]; // Indigo-600 (Header Background)
-    const colorTitle = [0, 0, 0]; // Pure Black (Main Title)
-    const colorHeading = [20, 20, 20]; // Off-Black (Headings - Sharp & Dark)
-    const colorBody = [0, 0, 0]; // Pure Black (Body Text - Max Readability)
-    const colorAccent = [200, 200, 200]; // Light Grey (Divider lines)
+    const colorPrimary = [79, 70, 229]; // Indigo-600
+    const colorTitle = [15, 23, 42]; // Slate-900
+    const colorHeading = [30, 41, 59]; // Slate-800
+    const colorBody = [51, 65, 85]; // Slate-700
+    const colorAccent = [226, 232, 240]; // Slate-200
 
     const cleanMarkdown = (text) => {
       return text
@@ -34,7 +34,7 @@ export default function SummaryPanel({
         .replace(/^\*\s+/, "");
     };
 
-    // Add Header 
+    // Add Header
     const addHeader = (docInstance, pageNumber) => {
       docInstance.setFillColor(...colorPrimary);
       docInstance.rect(0, 0, pageWidth, 20, "F");
@@ -50,7 +50,7 @@ export default function SummaryPanel({
       docInstance.text(dateStr, pageWidth - margin, 13, { align: "right" });
     };
 
-    // Add Footer 
+    // Add Footer
     const addFooter = (docInstance, pageNumber) => {
       docInstance.setDrawColor(200, 200, 200);
       docInstance.line(
@@ -71,7 +71,7 @@ export default function SummaryPanel({
       );
     };
 
-    // Check Page Break 
+    // Check Page Break
     let pageCount = 1;
     const checkPageBreak = (neededSpace) => {
       if (yPos + neededSpace > pageHeight - 25) {
@@ -85,12 +85,12 @@ export default function SummaryPanel({
       return false;
     };
 
-    // Start Document 
+    // Start Document
     addHeader(doc, pageCount);
     addFooter(doc, pageCount);
     yPos = 40;
 
-    //  Main Title 
+    //  Main Title
     doc.setTextColor(...colorTitle);
     doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
@@ -107,7 +107,7 @@ export default function SummaryPanel({
     doc.line(margin, yPos, pageWidth - margin, yPos);
     yPos += 15;
 
-    // Process Summary Content 
+    // Process Summary Content
     const rawLines = (summary || "No summary available.").split("\n");
 
     rawLines.forEach((line) => {
@@ -176,21 +176,21 @@ export default function SummaryPanel({
   return (
     <div
       className={`
-        fixed inset-y-0 right-0 z-40 w-96 bg-slate-900/95 backdrop-blur-xl border-l border-slate-800 
+        fixed inset-y-0 right-0 z-40 w-96 bg-white/95 backdrop-blur-xl border-l border-slate-200 
         transform transition-transform duration-300 ease-in-out shadow-2xl
         ${isOpen ? "translate-x-0" : "translate-x-full"}
       `}
     >
       {/* Header Area */}
-      <div className="p-6 border-b border-slate-800/50 flex items-center justify-between">
-        <h3 className="text-xs font-bold text-indigo-400 uppercase tracking-wider">
+      <div className="p-6 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
           Summary
         </h3>
         <div className="flex items-center gap-2">
           {summary && (
             <button
               onClick={handleDownloadPDF}
-              className="p-1.5 bg-indigo-600/10 hover:bg-indigo-600 text-indigo-400 hover:text-white rounded-lg transition-all"
+              className="p-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg transition-all"
               title="Download PDF"
             >
               <Download className="w-4 h-4" />
@@ -198,7 +198,7 @@ export default function SummaryPanel({
           )}
           <button
             onClick={onClose}
-            className="p-1.5 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg transition-all"
+            className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-lg transition-all"
           >
             <X className="w-4 h-4" />
           </button>
@@ -207,8 +207,9 @@ export default function SummaryPanel({
 
       {/* Content Area */}
       <div className="h-[calc(100vh-80px)] overflow-y-auto p-6 custom-scrollbar">
-        <div className="prose prose-invert prose-sm prose-slate max-w-none">
-          <div className="markdown-body text-xs text-slate-400 leading-relaxed">
+        {/* Removed prose-invert so text is dark */}
+        <div className="prose prose-sm prose-slate max-w-none">
+          <div className="markdown-body text-xs text-slate-600 leading-relaxed">
             <ReactMarkdown>{summary}</ReactMarkdown>
           </div>
         </div>
