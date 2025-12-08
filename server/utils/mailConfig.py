@@ -1,0 +1,14 @@
+from server.utils.config import MAIL_SERVER, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD
+from fastapi_mail import ConnectionConfig
+
+conf = ConnectionConfig(
+    MAIL_USERNAME=MAIL_USERNAME,
+    MAIL_PASSWORD=MAIL_PASSWORD,
+    MAIL_FROM=MAIL_USERNAME,
+    MAIL_PORT=MAIL_PORT,
+    MAIL_SERVER=MAIL_SERVER,
+    MAIL_STARTTLS=True,
+    MAIL_SSL_TLS=False,
+    USE_CREDENTIALS=True,
+    VALIDATE_CERTS=True
+)
