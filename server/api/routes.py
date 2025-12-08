@@ -96,7 +96,7 @@ async def chat_with_pdf(request: QuestionSchema, current_user: dict = Depends(ge
         print("[DEBUG] Chat history retrieved:", history)
 
         # Get RAG Answer
-        result = get_answer_from_pdf(clean_question, request.pdf_id, history)
+        result = get_answer_from_pdf(question=clean_question, pdf_id=request.pdf_id, chat_history=history, study_mode=request.study_mode)
         print("[DEBUG] Answer retrieved:", result)
         answer_text = result['result']
         source_documents = result['source_documents']
