@@ -19,10 +19,8 @@ export default function Sidebar({
   onDelete,
   onNewChat,
   activeId,
-  isOpen, // <--- KEPT THIS ONE
-  setIsOpen, // <--- KEPT THIS ONE
-  // Removed duplicate isOpen
-  // Removed duplicate setIsOpen
+  isOpen,
+  setIsOpen,
   userToken,
 }) {
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -75,7 +73,7 @@ export default function Sidebar({
     `}
     >
       <div className="h-full flex flex-col p-4">
-        {/* --- Header --- */}
+        {/*  Header  */}
         <div className="flex items-center justify-between mb-8 px-2">
           <div className="flex items-center gap-2 text-indigo-600 font-bold text-xl">
             <div className="p-2 bg-indigo-600 rounded-lg">
@@ -93,7 +91,7 @@ export default function Sidebar({
           </button>
         </div>
 
-        {/* --- New Chat Button --- */}
+        {/*  New Chat Button  */}
         <button
           onClick={onNewChat}
           className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-xl transition-all shadow-md hover:shadow-lg mb-6 font-medium"
@@ -101,7 +99,7 @@ export default function Sidebar({
           <Plus className="w-5 h-5" /> New Research
         </button>
 
-        {/* --- Document List (Scrollable Area) --- */}
+        {/*  Document List (Scrollable Area)  */}
         <div className="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar mb-4">
           <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-2">
             History
@@ -151,7 +149,7 @@ export default function Sidebar({
           )}
         </div>
 
-        {/* --- Footer / User Settings (Pinned Bottom) --- */}
+        {/*  Footer / User Settings (Pinned Bottom)  */}
         <div
           className="border-t border-slate-200 pt-4 mt-auto relative"
           ref={menuRef}
