@@ -1,123 +1,136 @@
 # Research Assistant for PDFs
 
-Research Assistant for PDFs is a small full-stack project that provides a web UI (client) and a FastAPI backend (server) to upload, process, embed, and query PDF documents. The backend uses LangChain-related packages, a Chroma/SQLite vector store, and an optional MongoDB connection for metadata/history.
+Research Assistant for PDFs is a full-stack prototype that helps you upload, process, embed, and query PDF documents using retrieval-augmented generation (RAG). It contains:
 
-**This README explains how to set up and run the project locally on Windows (PowerShell), what the repository contains, and common troubleshooting tips.**
+- A FastAPI backend (`server/`) that handles PDF uploads, embedding generation (Chroma/SQLite), and LLM-based question answering.
+- A React + Vite frontend (`client/`) that provides a developer-friendly UI to upload documents and chat with them.
 
-**Features**
-- Upload PDFs and store them under `data/uploads`
-- Create and persist embeddings in `data/vector_db` (Chroma/SQLite)
-- Query/search PDFs using language-model embeddings and retrieval
-- Web UI powered by React + Vite for interacting with the assistant
+This README explains how to set up and run the project locally on Windows (PowerShell), what environment variables are required, and the main API endpoints.
 
-**Quick Links**
-- Backend (FastAPI): `server/`
-- Frontend (React + Vite): `client/`
-- Persisted data: `data/` (uploads + vector DB)
+**Highlights**
+- Upload PDFs and persist files to `data/uploads`
+- Store embeddings in `data/vector_db` (Chroma-backed SQLite store)
+- Query documents with a conversational interface (chat + source traces)
+- Optional MongoDB to persist users, document metadata and chat history
 
-**Prerequisites**
-- Python 3.10+ (Windows) and `pip`
-- Node.js 18+ and `npm` (for the client)
-- Optional: MongoDB instance (if you want persistent metadata/history)
-- Optional: Gemini AI key or other model credentials used by the server (see `.env` below)
+**Repository layout (short)**
+- `server/` — FastAPI backend (API routes, utils, schema)
+- `client/` — React + Vite frontend
+- `data/` — runtime data: `uploads/` and `vector_db/`
 
-Getting started (server)
+Prerequisites
+- Python 3.10+
+- Node.js 18+ and `npm`
+- (Optional) MongoDB if you want persistent user/metadata storage
 
-1. Open PowerShell and clone the repo (if you haven't already):
+Quick start — backend (PowerShell)
 
-```powershell
-git clone <repo-url>
-cd Research_Assistant_for_PDFs
-```
-
-2. Create a Python virtual environment and activate it (PowerShell):
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-```
-
-3. Install Python dependencies:
-
-```powershell
-pip install --upgrade pip
-pip install -r server/requirements.txt
-```
-
-4. Create a `.env` file under `server/` with the values below (example):
-
-```
-# server/.env
-GEMINAI_API_KEY=your_geminai_api_key_here
-GEMINAI_MODEL=some-model-name
-MONGO_URI=mongodb://username:password@host:port/?retryWrites=true&w=majority
-MONGO_DB_NAME=research_assistant
-```
-
-Notes:
-- If you don't use MongoDB you can leave `MONGO_URI` / `MONGO_DB_NAME` empty; the server attempts to connect when starting.
-- `GEMINAI_API_KEY` is read by `server/utils/config.py`. Adjust `GEMINAI_MODEL` to the model you intend to use.
-
-5. Run the backend (development):
+1) Create and activate a virtual environment, install dependencies, and run the API:
 
 ```powershell
 # from repository root
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install --upgrade pip
+pip install -r server/requirements.txt
+
+# start server (development)
 uvicorn server.api.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-The API will be reachable at `http://localhost:8000/`. The frontend is configured to use `http://localhost:8000` for API calls.
+The API will be available at `http://localhost:8000/`.
 
-Getting started (client)
-
-1. From repository root, change to the client directory and install:
+Quick start — frontend (PowerShell)
 
 ```powershell
 cd client
 npm install
-```
-
-2. Run the dev server:
-
-```powershell
 npm run dev
 ```
 
-Open `http://localhost:5173` (Vite default) in your browser. The client makes requests to `/api` endpoints on the backend; the backend allows CORS from `http://localhost:5173`.
+Open the Vite dev URL (usually `http://localhost:5173`) to use the UI. The client expects the backend at `http://localhost:8000` by default.
 
-Project structure (important files)
-- `server/` - FastAPI backend
-  - `server/api/main.py` - FastAPI app entrypoint and UVicorn runner
-  - `server/api/routes.py` - API routes
-  - `server/utils/` - helpers (config, db, PDF processing, llm wrappers)
-  - `server/requirements.txt` - Python dependencies
-- `client/` - React frontend (Vite)
-  - `client/src/` - React app sources
-  - `client/package.json` - client scripts & deps
-- `data/` - persisted runtime data
-  - `data/uploads/` - uploaded PDF files
-  - `data/vector_db/` - Chroma/SQLite vector DB (example: `chroma.sqlite3`)
+Environment configuration (`server/.env`)
 
-Notes about data and persistence
-- The server creates the `data/` directory if it doesn't exist. Uploaded PDFs go to `data/uploads` and the vector DB is kept in `data/vector_db`.
-- Keep `data/vector_db` if you want to persist embeddings between restarts.
+Create `server/.env` with the values you need. Minimum useful vars for local runs (examples):
 
-Environment & configuration
-- Default configuration is loaded from `server/.env` (see `server/utils/config.py`).
-- If you need to customize embedding or model settings, inspect `server/utils/llm.py` and `server/utils/config.py`.
+```env
+# LLM / embeddings
+GEMINAI_API_KEY=your_geminai_api_key_here
+GEMINAI_MODEL=gemini-1.5
+EMBEDDING_MODEL=models/embedding-001
 
-Troubleshooting
-- Missing .env values: the server will print the loaded values on `/` and in startup logs. Ensure `GEMINAI_API_KEY` and `MONGO_URI` are set if needed.
-- MongoDB connection failures: verify network access and credentials. You can run temporarily without Mongo by leaving those values blank.
-- Port conflicts: change the `--port` value when launching `uvicorn` or the Vite dev server.
+# Optional MongoDB (for users, metadata, history)
+MONGO_URI=mongodb://username:password@host:port
+MONGO_DB_NAME=research_assistant
 
-Testing & development notes
-- Backend: the app runs with `uvicorn` in reload mode for development. Add tests and a test runner as needed.
-- Frontend: lint with `npm run lint` in `client/` (requires ESLint dev dependencies which are in `client/package.json`).
+# JWT + encryption (used for auth/session tokens)
+JWT_SECRET_KEY=supersecretkey
+JWT_ALGORITHM=HS256
+JWT_EXPIRATION_MINUTES=60
+ENCRYPTION_KEY=some-base64-or-hex-key
 
-Contributing
-- Fork and open a PR on the `develop` branch.
-- Run the backend and client locally, add tests for new features, and document behavior in `README.md`.
+# Mail (OTP flow)
+MAIL_SERVER=smtp.example.com
+MAIL_PORT=587
+MAIL_USERNAME=you@example.com
+MAIL_PASSWORD=your_mail_password
+MAIL_FROM=you@example.com
+
+# Data directories (defaults are fine)
+UPLOAD_DIR=data/uploads
+VECTOR_DB_DIR=data/vector_db
+```
+
+Notes:
+- If you don't provide `MONGO_URI`, the app will still start but parts of the system (user persistence, document indexes stored in Mongo) will be limited. The server logs startup connection attempts.
+- Mail configuration is used by the OTP / registration flow (the app sends OTPs for registration/login verification).
+
+Main API endpoints
+
+All API endpoints are under the `/api` prefix. The backend requires authentication for document and chat operations (see *Auth* below).
+
+- POST `/api/upload` — Upload a PDF and process it (returns a structured summary). Requires multipart-form file and auth.
+- POST `/api/chat` — Ask a question about a processed PDF (body: { pdf_id, question, study_mode }). Returns `answer` and `source_documents`.
+- GET `/api/documents` — List documents for the authenticated user.
+- GET `/api/history/{pdf_id}` — Get chat history for a PDF (authenticated user must own the PDF).
+- DELETE `/api/document/{pdf_id}` — Delete a document and its chat history (owner only).
+
+Auth and user flow
+
+This project uses an email + OTP flow + JWT tokens for authentication:
+
+1. POST `/api/auth/register` — create an account. Server generates an OTP and emails it.
+2. POST `/api/auth/login` — request a login OTP emailed to the user's address.
+3. POST `/api/auth/verify-otp` — verify the OTP; server returns a JWT access token on success.
+
+Use the returned `access_token` as a Bearer token in the `Authorization` header for protected endpoints:
+
+```
+Authorization: Bearer <access_token>
+```
+
+Data storage and directories
+
+- `data/uploads/` — uploaded PDF files (saved by `server/utils/PDFProcess.py`).
+- `data/vector_db/` — Chroma/SQLite vector store files created by the embedding pipeline.
+
+Development notes
+
+- The main FastAPI entrypoint is `server/api/main.py` (used by `uvicorn`). It mounts `data/` as static files so you can access processed assets if needed.
+- The upload endpoint processes PDFs into embeddings by calling `server/utils/PDFProcess.py` and Chroma via `langchain-chroma`.
+- Frontend scripts are in `client/package.json`:
+  - `npm run dev` — start Vite dev server
+  - `npm run build` — build production files
+  - `npm run preview` — preview the production build
+
+Troubleshooting & tips
+
+- Vector DB locked / permissions: ensure `data/vector_db` exists and is writable by your user.
+- Missing LLM key / invalid model: verify `GEMINAI_API_KEY` and `GEMINAI_MODEL` in `server/.env` and check logs from `uvicorn`.
+- Mail not sending OTPs: verify `MAIL_SERVER`, `MAIL_PORT`, `MAIL_USERNAME`, and `MAIL_PASSWORD`.
+- If Mongo fails to connect and you don't need it for quick testing, you can still run upload/chat flows for a single session if the backend handles missing Mongo gracefully — but persistence will be limited.
 
 License
-- This repository includes a `LICENSE` file at the root.
----
+
+See the `LICENSE` file at the repository root.
