@@ -4,6 +4,8 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import PromptTemplate
 from langchain_community.document_loaders import PyMuPDFLoader
+from langchain_community.tools import WikipediaQueryRun, DuckDuckGoSearchRun
+from langchain_community.utilities import WikipediaAPIWrapper
 from server.utils.PDFProcess import get_vector_store
 from server.utils.QAScript import evaluate_response
 from server.utils.config import GEMINAI_MODEL, GEMINAI_API_KEY, UPLOAD_DIR
@@ -14,6 +16,10 @@ llm = ChatGoogleGenerativeAI(
     temperature=0.3,
     convert_system_message_to_human=True
 )
+
+wikipedia = WikipediaQueryRun(api_wrapper=WikipediaAPIWrapper())
+search = DuckDuckGoSearchRun()
+
 
 def generate_structured_summary(file_path: str) -> str:
     loader = PyMuPDFLoader(file_path)
@@ -65,7 +71,28 @@ def generate_structured_summary(file_path: str) -> str:
         return f"Error generating summary: {str(e)}"
 
 
-def get_answer_from_pdf(question: str, pdf_id: str, chat_history: list):
+def get_external_context(question: str) -> str:
+    print(f"[DEBUG] Fetching external context for: {question}")
+    external_context = ""
+
+    # 1. Try Wikipedia first
+    try:
+        wiki_res = wikipedia.run(question)
+        external_context += f"\n\n--- WIKIPEDIA RESULTS ---\n{wiki_res}"
+    except Exception as e:
+        print(f"Wiki Error: {e}")
+
+    # 2. Try DuckDuckGo
+    try:
+        ddg_res = search.run(question)
+        external_context += f"\n\n--- INTERNET SEARCH RESULTS ---\n{ddg_res}"
+    except Exception as e:
+        print(f"DDG Error: {e}")
+
+    return external_context
+
+
+def get_answer_from_pdf(question: str, pdf_id: str, chat_history: list, study_mode: bool = False):
     if not pdf_id:
         return {
             "result": "Error: pdf_id is missing.",
@@ -84,6 +111,11 @@ def get_answer_from_pdf(question: str, pdf_id: str, chat_history: list):
     except Exception as e:
         print("Retriever error:", e)
         docs = []
+        pdf_context = ""
+
+    external_context = ""
+    if study_mode:
+        external_context = get_external_context(question)
 
     first_page_text = ""
     found_file_path = None
@@ -117,7 +149,7 @@ def get_answer_from_pdf(question: str, pdf_id: str, chat_history: list):
     retrieved_content = "\n\n".join([d.page_content.replace("\n", " ") for d in docs])
 
     # Prepend the first page text. If empty, it adds nothing.
-    full_context = first_page_text + "\n\n" + retrieved_content
+    full_context = first_page_text + "\n\n" + retrieved_content + "\n\n" + external_context
 
     # 4. Format History
     formatted_history = "\n".join(
@@ -132,28 +164,51 @@ def get_answer_from_pdf(question: str, pdf_id: str, chat_history: list):
         print(f"[DEBUG] Generate Attempt {attempt + 1}/{MAX_RETRIES}")
 
         # 5. Prompting
-        template = """
-        You are a research assistant. Answer the User Question using ONLY the provided context.
+        if study_mode:
+            # TEACHER PROMPT
+            template = """
+                You are an expert AI Tutor. Your goal is to TEACH the user about the topic using the provided content.
 
-        CRITICAL INSTRUCTIONS:
-        1. The context starts with the **Document Metadata** (Title, Abstract, Authors). USE THIS for questions about the paper itself.
-        2. If the answer is found in the Metadata section, state it clearly.
-        3. If the answer is not in the context, say "I cannot find the answer."
-        4. Do NOT hallucinate.
-        5. Limit your answer to 1000 words.
+                Sources Available:
+                1. A PDF Document uploaded by the user.
+                2. Wikipedia and Internet Search results.
 
-        {feedback_section}
+                Instructions:
+                - Prioritize the **PDF Content** as the primary source of truth.
+                - Use the **External Context** (Wikipedia/Internet) to explain concepts that are difficult, define terms, or provide broader examples not found in the PDF.
+                - If the PDF mentions a concept briefly, use the external info to expand on it comprehensively.
+                - Structure your answer like a tutorial or a lesson. Use bullet points and clear headings.
+                - If the answer is not in any of the sources, admit it.
 
-        -----------------------------
-        Conversation History:
-        {history}
+                -----------------------------
+                Conversation History:
+                {history}
 
-        Context:
-        {context}
+                Combined Context:
+                {context}
 
-        User Question:
-        {question}
-        """
+                User Question:
+                {question}
+                """
+        else:
+            # STANDARD RAG PROMPT (Your existing one, slightly cleaned)
+            template = """
+                You are a research assistant. Answer the User Question using ONLY the provided context.
+
+                1. The context comes from a PDF document.
+                2. If the answer is not in the context, say "I cannot find the answer in the document."
+                3. Do NOT hallucinate.
+
+                -----------------------------
+                Conversation History:
+                {history}
+
+                Context:
+                {context}
+
+                User Question:
+                {question}
+                """
 
         feedback_section = ""
         if feedback:
@@ -203,7 +258,6 @@ def get_answer_from_pdf(question: str, pdf_id: str, chat_history: list):
             current_answer = f"Error generating answer: {str(e)}"
             print(current_answer)
             break
-
 
     header_preview = first_page_text[:150].replace("\n",
                                                    " ") + "..." if first_page_text else "(Error: Could not load Page 1 Text)"
