@@ -18,3 +18,4 @@ pdfminer
 unstructured
 pymupdf
 pydantic[email]
+fastapi_mail
