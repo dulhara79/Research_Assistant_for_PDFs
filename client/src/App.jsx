@@ -7,21 +7,28 @@ import Dashboard from "./pages/Dashboard";
 import LandingPage from "./pages/LandingPage";
 import Chat from "./pages/Chat";
 import VerifyOTP from "./pages/VerifyOTP";
+import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./context/AuthContext";
 
 const App = () => {
   return (
     <Router>
-      <AuthProvider>
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/verify-otp" element={<VerifyOTP />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/chat" element={<Chat />} />
-        </Routes>
-      </AuthProvider>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/verify-otp" element={<VerifyOTP />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route
+          path="/chat"
+          element={
+            <AuthProvider>
+              <Chat />
+            </AuthProvider>
+          }
+        />
+        <Route path="/*" element={<NotFound />} />
+      </Routes>
     </Router>
   );
 };
