@@ -6,9 +6,11 @@ from fastapi_mail import MessageSchema, MessageType, FastMail
 from server.utils.db import db_instance
 from server.schemas.UserSchema import (UserCreateSchema, UserOutputSchema, UserLoginSchema, TokenSchema,
                                        UserUpdateSchema, OTPVerifySchema, OTPSendSchema)
-from server.utils.security import get_password_hash, verify_password, create_access_token, generate_otp
+from server.utils.security import (get_password_hash, verify_password, create_access_token,
+                                   generate_otp, encrypt_message, decrypt_message)
 from server.utils.auth import get_current_user, oauth2_scheme
 from server.utils.mailConfig import conf
+from server.utils.emailTemplates import loginTemplate, registrationTemplate
 
 router = APIRouter(tags=["Authentication"])
 
@@ -33,7 +35,10 @@ async def register_user(user: UserCreateSchema, background_tasks: BackgroundTask
     # return created_user
     # Generate OTP immediately upon registration
     otp_code = generate_otp()
-    user_dict["otp_code"] = otp_code
+
+    encripted_otp = encrypt_message(otp_code)
+
+    user_dict["otp_code"] = encripted_otp
     user_dict["otp_expires_at"] = datetime.utcnow() + timedelta(minutes=5)
 
     await db_instance.db["users"].insert_one(user_dict)
@@ -70,16 +75,18 @@ async def login_user(login_data: UserLoginSchema, background_tasks: BackgroundTa
     otp_code = generate_otp()
     expiration_time = datetime.utcnow() + timedelta(minutes=5)
 
+    encripted_otp = encrypt_message(otp_code)
+
     await db_instance.db["users"].update_one(
         {"email": login_data.email},
-        {"$set": {"otp_code": otp_code, "otp_expires_at": expiration_time}}
+        {"$set": {"otp_code": encripted_otp, "otp_expires_at": expiration_time}}
     )
 
     # 3. Send Email
     message = MessageSchema(
         subject="Login OTP",
         recipients=[login_data.email],
-        body=f"<h3>Your Login OTP is:</h3> <h1>{otp_code}</h1>",
+        body=loginTemplate(otp_code),
         subtype=MessageType.html
     )
     fm = FastMail(conf)
@@ -157,7 +164,7 @@ async def send_otp(otp_data: OTPSendSchema, background_tasks: BackgroundTasks):
     message = MessageSchema(
         subject="Your OTP Code",
         recipients=[email],
-        body=f"<h3>Your One-Time Password is:</h3> <h1>{otp_code}</h1> <p>This code expires in 5 minutes.</p>",
+        body=registrationTemplate(otp_code),
         subtype=MessageType.html
     )
 
@@ -176,11 +183,13 @@ async def verify_otp(otp_data: OTPVerifySchema):
     stored_otp = user.get("otp_code")
     expiry = user.get("otp_expires_at")
 
-    if not stored_otp or not expiry:
+    decrypted_otp = decrypt_message(stored_otp) if stored_otp else None
+
+    if not decrypted_otp or not expiry:
         raise HTTPException(status_code=400, detail="No OTP requested")
 
         # 3. Validate OTP and Expiry
-    if stored_otp != otp_data.otp:
+    if decrypted_otp != otp_data.otp:
         raise HTTPException(status_code=400, detail="Invalid OTP")
 
     if datetime.utcnow() > expiry:
