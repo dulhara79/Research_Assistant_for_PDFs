@@ -5,7 +5,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import LandingPage from "./pages/LandingPage";
-import Chat from "./pages/Chat";
+import Chat from "./pages/ChatPage";
 import VerifyOTP from "./pages/VerifyOTP";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./context/AuthContext";
