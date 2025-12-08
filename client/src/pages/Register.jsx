@@ -18,7 +18,7 @@ export default function Register() {
     setLoading(true);
     try {
       await register(formData);
-      navigate('/login');
+      navigate('/chat');
     } catch (err) {
       setError(err.response?.data?.detail || 'Registration failed');
     } finally {

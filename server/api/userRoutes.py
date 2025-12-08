@@ -6,7 +6,7 @@ from server.utils.db import db_instance
 from server.schemas.UserSchema import (UserCreateSchema, UserOutputSchema, UserLoginSchema, TokenSchema,
                                        UserUpdateSchema)
 from server.utils.security import get_password_hash, verify_password, create_access_token
-from server.utils.auth import get_current_user
+from server.utils.auth import get_current_user, oauth2_scheme
 
 router = APIRouter(tags=["Authentication"])
 
@@ -50,6 +50,19 @@ async def login_user(login_data: UserLoginSchema):
 async def read_users_me(current_user: dict = Depends(get_current_user)):
     return current_user
 
+
+@router.post("/logout", status_code=status.HTTP_201_CREATED)
+async def logout(token: str = Depends(oauth2_scheme)):
+    # await db_instance.db["token_blacklist"].create_index("blacklisted_at", expireAfterSeconds=86400)
+
+    existing = await db_instance.db["token_blacklist"].find_one({"token": token})
+    if not existing:
+        await db_instance.db["token_blacklist"].insert_one({
+            "token": token,
+            "blacklisted_at": datetime.utcnow(),
+        })
+
+    return {"message": "Successfully logged out"}
 
 @router.put("/me", response_model=UserOutputSchema)
 async def update_user(

@@ -8,9 +8,10 @@ import {
   Settings,
   LogOut,
   User,
-  MoreHorizontal,
-} from "lucide-react"; // Import Trash2
+  PanelLeftClose,
+} from "lucide-react";
 import api from "../../context/api";
+import { useAuth } from "../../context/AuthContext";
 
 export default function Sidebar({
   documents,
@@ -18,13 +19,15 @@ export default function Sidebar({
   onDelete,
   onNewChat,
   activeId,
-  isOpen,
-  setIsOpen,
-  onLogout,
+  isOpen, // <--- KEPT THIS ONE
+  setIsOpen, // <--- KEPT THIS ONE
+  // Removed duplicate isOpen
+  // Removed duplicate setIsOpen
   userToken,
 }) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const menuRef = useRef(null);
+  const { logout, user } = useAuth();
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -35,6 +38,10 @@ export default function Sidebar({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [menuRef]);
+
+  const handleLogoutClick = async () => {
+    await logout();
+  };
 
   const handleDeleteAccount = async () => {
     if (
@@ -50,7 +57,7 @@ export default function Sidebar({
         });
 
         if (response.ok || response.status === 204) {
-          onLogout(); // Log the user out after deletion
+          await logout();
         } else {
           alert("Failed to delete account");
         }
@@ -64,9 +71,7 @@ export default function Sidebar({
     <aside
       className={`
       fixed inset-y-0 left-0 z-50 w-72 bg-slate-900 border-r border-slate-800 transform transition-transform duration-300 ease-in-out flex flex-col
-      ${
-        isOpen ? "translate-x-0" : "-translate-x-full"
-      } lg:translate-x-0 lg:static
+      ${isOpen ? "translate-x-0" : "-translate-x-full"}
     `}
     >
       <div className="h-full flex flex-col p-4">
@@ -78,11 +83,14 @@ export default function Sidebar({
             </div>
             <span>ScholarSense</span>
           </div>
+
+          {/* Close Button */}
           <button
             onClick={() => setIsOpen(false)}
-            className="lg:hidden text-slate-400 hover:text-white"
+            className="text-slate-400 hover:text-white"
           >
-            <X className="w-6 h-6" />
+            {/* If PanelLeftClose is not available in your Lucide version, verify import. Using X as fallback if needed, but PanelLeftClose is better UI */}
+            <PanelLeftClose className="w-6 h-6" />
           </button>
         </div>
 
@@ -152,7 +160,7 @@ export default function Sidebar({
                   My Settings
                 </button>
                 <button
-                  onClick={onLogout}
+                  onClick={handleLogoutClick}
                   className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-slate-300 hover:bg-slate-700 hover:text-white rounded-lg transition-colors text-left"
                 >
                   <LogOut className="w-4 h-4" />
@@ -187,9 +195,9 @@ export default function Sidebar({
               </div>
               <div className="text-left">
                 <div className="text-sm font-medium text-slate-200">
-                  Account
+                  {user?.name || "User"}
                 </div>
-                <div className="text-xs text-slate-500">Manage</div>
+                <div className="text-xs text-slate-500">Account Manage</div>
               </div>
             </div>
             <Settings

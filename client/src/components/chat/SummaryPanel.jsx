@@ -1,9 +1,14 @@
 import React from "react";
 import ReactMarkdown from "react-markdown";
-import { Download } from "lucide-react";
+import { Download, X } from "lucide-react";
 import jsPDF from "jspdf";
 
-export default function SummaryPanel({ summary, title = "Document Title" }) {
+export default function SummaryPanel({
+  summary,
+  title = "Document Title",
+  isOpen,
+  onClose,
+}) {
   const handleDownloadPDF = () => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -12,27 +17,24 @@ export default function SummaryPanel({ summary, title = "Document Title" }) {
     const maxLineWidth = pageWidth - margin * 2;
     let yPos = margin;
 
-    // --- Premium Color Palette ---
     const colorPrimary = [79, 70, 229]; // Indigo-600 (Header Background)
     const colorTitle = [0, 0, 0]; // Pure Black (Main Title)
     const colorHeading = [20, 20, 20]; // Off-Black (Headings - Sharp & Dark)
     const colorBody = [0, 0, 0]; // Pure Black (Body Text - Max Readability)
     const colorAccent = [200, 200, 200]; // Light Grey (Divider lines)
 
-    // --- Helper: Clean Markdown Symbols ---
-    // Removes **, *, _, `, []() to make text readable
     const cleanMarkdown = (text) => {
       return text
-        .replace(/\*\*(.*?)\*\*/g, "$1") // Remove bold syntax (**text**)
-        .replace(/\*(.*?)\*/g, "$1") // Remove italic syntax (*text*)
-        .replace(/_(.*?)_/g, "$1") // Remove underscore italics (_text_)
-        .replace(/`{1,3}(.*?)`{1,3}/g, "$1") // Remove code ticks
-        .replace(/\[(.*?)\]\(.*?\)/g, "$1") // Remove links, keep label
-        .replace(/^-\s+/, "") // Remove bullet point markers for processing
-        .replace(/^\*\s+/, ""); // Remove asterisk markers for processing
+        .replace(/\*\*(.*?)\*\*/g, "$1")
+        .replace(/\*(.*?)\*/g, "$1")
+        .replace(/_(.*?)_/g, "$1")
+        .replace(/`{1,3}(.*?)`{1,3}/g, "$1")
+        .replace(/\[(.*?)\]\(.*?\)/g, "$1")
+        .replace(/^-\s+/, "")
+        .replace(/^\*\s+/, "");
     };
 
-    // --- Helper: Add Header ---
+    // Add Header 
     const addHeader = (docInstance, pageNumber) => {
       docInstance.setFillColor(...colorPrimary);
       docInstance.rect(0, 0, pageWidth, 20, "F");
@@ -48,7 +50,7 @@ export default function SummaryPanel({ summary, title = "Document Title" }) {
       docInstance.text(dateStr, pageWidth - margin, 13, { align: "right" });
     };
 
-    // --- Helper: Add Footer ---
+    // Add Footer 
     const addFooter = (docInstance, pageNumber) => {
       docInstance.setDrawColor(200, 200, 200);
       docInstance.line(
@@ -69,13 +71,13 @@ export default function SummaryPanel({ summary, title = "Document Title" }) {
       );
     };
 
-    // --- Helper: Check Page Break ---
+    // Check Page Break 
     let pageCount = 1;
     const checkPageBreak = (neededSpace) => {
       if (yPos + neededSpace > pageHeight - 25) {
         doc.addPage();
         pageCount++;
-        yPos = 35; // Reset Y below header
+        yPos = 35;
         addHeader(doc, pageCount);
         addFooter(doc, pageCount);
         return true;
@@ -83,17 +85,16 @@ export default function SummaryPanel({ summary, title = "Document Title" }) {
       return false;
     };
 
-    // --- 1. Start Document ---
+    // Start Document 
     addHeader(doc, pageCount);
     addFooter(doc, pageCount);
     yPos = 40;
 
-    // --- 2. Main Title ---
+    //  Main Title 
     doc.setTextColor(...colorTitle);
     doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
 
-    // Clean title just in case
     const cleanTitle = cleanMarkdown(title);
     const titleLines = doc.splitTextToSize(cleanTitle, maxLineWidth);
     doc.text(titleLines, margin, yPos);
@@ -106,25 +107,22 @@ export default function SummaryPanel({ summary, title = "Document Title" }) {
     doc.line(margin, yPos, pageWidth - margin, yPos);
     yPos += 15;
 
-    // --- 3. Process Summary Content ---
+    // Process Summary Content 
     const rawLines = (summary || "No summary available.").split("\n");
 
     rawLines.forEach((line) => {
       const trimmedLine = line.trim();
       if (!trimmedLine) {
-        yPos += 5; // Space for empty lines
+        yPos += 5;
         return;
       }
 
-      // Clean the text of markdown symbols for rendering
       const displayText = cleanMarkdown(trimmedLine);
 
       if (trimmedLine.startsWith("#")) {
-        // --- HEADING DETECTION (#) ---
         doc.setFont("helvetica", "bold");
-        doc.setTextColor(...colorHeading); // Deep Navy
+        doc.setTextColor(...colorHeading);
 
-        // Size logic: H1 (#) vs H2 (##)
         const isMainHeading = trimmedLine.startsWith("# ");
         const fontSize = isMainHeading ? 14 : 13;
         doc.setFontSize(fontSize);
@@ -132,17 +130,15 @@ export default function SummaryPanel({ summary, title = "Document Title" }) {
         const lineHeight = fontSize * 0.5 + 4;
         checkPageBreak(lineHeight + 8);
 
-        yPos += 5; // Spacing before heading
+        yPos += 5;
         doc.text(displayText.replace(/^#+\s*/, ""), margin, yPos);
         yPos += lineHeight + 2;
       } else if (trimmedLine.startsWith("- ") || trimmedLine.startsWith("* ")) {
-        // --- BULLET POINT DETECTION (-, *) ---
         doc.setFont("helvetica", "normal");
         doc.setTextColor(...colorBody);
         doc.setFontSize(11);
 
         const lineHeight = 6;
-        // Indent text, add bullet symbol
         const indent = 5;
         const bulletLineWidth = maxLineWidth - indent;
 
@@ -150,17 +146,13 @@ export default function SummaryPanel({ summary, title = "Document Title" }) {
 
         checkPageBreak(wrappedLines.length * lineHeight);
 
-        // Draw Bullet
         doc.text("•", margin, yPos);
-
-        // Draw Text (Indented)
         wrappedLines.forEach((wrappedLine) => {
           doc.text(wrappedLine, margin + indent, yPos);
           yPos += lineHeight;
         });
         yPos += 2;
       } else {
-        // --- STANDARD PARAGRAPH ---
         doc.setFont("helvetica", "normal");
         doc.setTextColor(...colorBody);
         doc.setFontSize(11);
@@ -174,34 +166,47 @@ export default function SummaryPanel({ summary, title = "Document Title" }) {
           doc.text(wrappedLine, margin, yPos);
           yPos += lineHeight;
         });
-        yPos += 3; // Gap between paragraphs
+        yPos += 3;
       }
     });
 
-    // --- 4. Save ---
     doc.save("scholar_sense_summary.pdf");
   };
 
   return (
-    <div className="hidden xl:flex flex-col w-120 border-l border-slate-800 bg-slate-900/50 h-full">
-      {/* Header Area of Panel */}
-      <div className="p-6 border-b border-slate-800/50 flex items-center justify-between bg-slate-900/80 backdrop-blur-md">
+    <div
+      className={`
+        fixed inset-y-0 right-0 z-40 w-96 bg-slate-900/95 backdrop-blur-xl border-l border-slate-800 
+        transform transition-transform duration-300 ease-in-out shadow-2xl
+        ${isOpen ? "translate-x-0" : "translate-x-full"}
+      `}
+    >
+      {/* Header Area */}
+      <div className="p-6 border-b border-slate-800/50 flex items-center justify-between">
         <h3 className="text-xs font-bold text-indigo-400 uppercase tracking-wider">
-          Executive Summary
+          Summary
         </h3>
-        {summary && (
+        <div className="flex items-center gap-2">
+          {summary && (
+            <button
+              onClick={handleDownloadPDF}
+              className="p-1.5 bg-indigo-600/10 hover:bg-indigo-600 text-indigo-400 hover:text-white rounded-lg transition-all"
+              title="Download PDF"
+            >
+              <Download className="w-4 h-4" />
+            </button>
+          )}
           <button
-            onClick={handleDownloadPDF}
-            className="p-1.5 bg-indigo-600/10 hover:bg-indigo-600 text-indigo-400 hover:text-white rounded-lg transition-all"
-            title="Download PDF"
+            onClick={onClose}
+            className="p-1.5 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg transition-all"
           >
-            <Download className="w-4 h-4" />
+            <X className="w-4 h-4" />
           </button>
-        )}
+        </div>
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+      <div className="h-[calc(100vh-80px)] overflow-y-auto p-6 custom-scrollbar">
         <div className="prose prose-invert prose-sm prose-slate max-w-none">
           <div className="markdown-body text-xs text-slate-400 leading-relaxed">
             <ReactMarkdown>{summary}</ReactMarkdown>
