@@ -1,123 +1,104 @@
 # Research Assistant for PDFs
 
-Research Assistant for PDFs is a small full-stack project that provides a web UI (client) and a FastAPI backend (server) to upload, process, embed, and query PDF documents. The backend uses LangChain-related packages, a Chroma/SQLite vector store, and an optional MongoDB connection for metadata/history.
+Research Assistant for PDFs is a full-stack project that provides a React + Vite web UI (`client/`) and a FastAPI backend (`server/`) to upload, process, embed, and query PDF documents using LLM-based retrieval. The backend uses LangChain-related packages and a Chroma/SQLite vector store (with optional MongoDB for metadata/history).
 
-**This README explains how to set up and run the project locally on Windows (PowerShell), what the repository contains, and common troubleshooting tips.**
+This README contains a concise overview, development & run instructions (Windows PowerShell), configuration hints, and a high-level project structure to get you started quickly.
 
-**Features**
-- Upload PDFs and store them under `data/uploads`
+**Highlights**
+- Upload PDFs and persist files to `data/uploads`
 - Create and persist embeddings in `data/vector_db` (Chroma/SQLite)
-- Query/search PDFs using language-model embeddings and retrieval
-- Web UI powered by React + Vite for interacting with the assistant
+- Query PDFs using embedding retrieval and an LLM for answers
+- Frontend built with React (Vite) for a developer-friendly UI
 
-**Quick Links**
-- Backend (FastAPI): `server/`
-- Frontend (React + Vite): `client/`
-- Persisted data: `data/` (uploads + vector DB)
+## Quick Start (development)
 
-**Prerequisites**
-- Python 3.10+ (Windows) and `pip`
-- Node.js 18+ and `npm` (for the client)
-- Optional: MongoDB instance (if you want persistent metadata/history)
-- Optional: Gemini AI key or other model credentials used by the server (see `.env` below)
+Prerequisites
+- Python 3.10+ and `pip`
+- Node.js 18+ and `npm`
+- (Optional) MongoDB if you want persistent user/metadata storage
+- (Optional) A generative model API key (e.g., Gemini/Google GenAI) — see `server/.env`
 
-Getting started (server)
-
-1. Open PowerShell and clone the repo (if you haven't already):
-
-```powershell
-git clone <repo-url>
-cd Research_Assistant_for_PDFs
-```
-
-2. Create a Python virtual environment and activate it (PowerShell):
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-```
-
-3. Install Python dependencies:
-
-```powershell
-pip install --upgrade pip
-pip install -r server/requirements.txt
-```
-
-4. Create a `.env` file under `server/` with the values below (example):
-
-```
-# server/.env
-GEMINAI_API_KEY=your_geminai_api_key_here
-GEMINAI_MODEL=some-model-name
-MONGO_URI=mongodb://username:password@host:port/?retryWrites=true&w=majority
-MONGO_DB_NAME=research_assistant
-```
-
-Notes:
-- If you don't use MongoDB you can leave `MONGO_URI` / `MONGO_DB_NAME` empty; the server attempts to connect when starting.
-- `GEMINAI_API_KEY` is read by `server/utils/config.py`. Adjust `GEMINAI_MODEL` to the model you intend to use.
-
-5. Run the backend (development):
+1) Install backend dependencies and run the API (PowerShell)
 
 ```powershell
 # from repository root
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install --upgrade pip
+pip install -r server/requirements.txt
+
+# start server (development)
 uvicorn server.api.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-The API will be reachable at `http://localhost:8000/`. The frontend is configured to use `http://localhost:8000` for API calls.
+The API will be available at `http://localhost:8000/`.
 
-Getting started (client)
-
-1. From repository root, change to the client directory and install:
+2) Install and run the frontend (Vite)
 
 ```powershell
 cd client
 npm install
-```
-
-2. Run the dev server:
-
-```powershell
 npm run dev
 ```
 
-Open `http://localhost:5173` (Vite default) in your browser. The client makes requests to `/api` endpoints on the backend; the backend allows CORS from `http://localhost:5173`.
+Open the Vite dev URL (usually `http://localhost:5173`) to use the web UI. The client is configured to contact the backend at `http://localhost:8000` (adjust if you change ports).
 
-Project structure (important files)
-- `server/` - FastAPI backend
-  - `server/api/main.py` - FastAPI app entrypoint and UVicorn runner
-  - `server/api/routes.py` - API routes
-  - `server/utils/` - helpers (config, db, PDF processing, llm wrappers)
-  - `server/requirements.txt` - Python dependencies
-- `client/` - React frontend (Vite)
-  - `client/src/` - React app sources
-  - `client/package.json` - client scripts & deps
-- `data/` - persisted runtime data
-  - `data/uploads/` - uploaded PDF files
-  - `data/vector_db/` - Chroma/SQLite vector DB (example: `chroma.sqlite3`)
+## Configuration (`server/.env`)
+Create a `server/.env` file (examples):
 
-Notes about data and persistence
-- The server creates the `data/` directory if it doesn't exist. Uploaded PDFs go to `data/uploads` and the vector DB is kept in `data/vector_db`.
-- Keep `data/vector_db` if you want to persist embeddings between restarts.
+```
+# server/.env
+GEMINAI_API_KEY=your_geminai_api_key_here
+GEMINAI_MODEL=gemini-1.5-probably
+EMBEDDING_MODEL=all-MiniLM-L6-v2
+MONGO_URI=mongodb://username:password@host:port
+MONGO_DB_NAME=research_assistant
+UPLOAD_DIR=data/uploads
+VECTOR_DB_DIR=data/vector_db
+```
 
-Environment & configuration
-- Default configuration is loaded from `server/.env` (see `server/utils/config.py`).
-- If you need to customize embedding or model settings, inspect `server/utils/llm.py` and `server/utils/config.py`.
+- `GEMINAI_API_KEY` and `GEMINAI_MODEL` are used by `server/utils/llm.py` and `server/utils/config.py`.
+- If you don't use MongoDB, you may leave `MONGO_URI` and `MONGO_DB_NAME` empty; the server will attempt to connect on startup but the app supports running without Mongo for basic functionality.
 
-Troubleshooting
-- Missing .env values: the server will print the loaded values on `/` and in startup logs. Ensure `GEMINAI_API_KEY` and `MONGO_URI` are set if needed.
-- MongoDB connection failures: verify network access and credentials. You can run temporarily without Mongo by leaving those values blank.
-- Port conflicts: change the `--port` value when launching `uvicorn` or the Vite dev server.
+## Project structure (high level)
 
-Testing & development notes
-- Backend: the app runs with `uvicorn` in reload mode for development. Add tests and a test runner as needed.
-- Frontend: lint with `npm run lint` in `client/` (requires ESLint dev dependencies which are in `client/package.json`).
+- `server/` — FastAPI backend
+  - `server/api/main.py` — FastAPI app entrypoint (used by `uvicorn`)
+  - `server/api/routes.py`, `userRoutes.py` — API route modules
+  - `server/utils/` — helpers: `config.py`, `db.py`, `PDFProcess.py`, `llm.py`, `QAScript.py`, etc.
+  - `server/requirements.txt` — Python dependencies
+- `client/` — React + Vite frontend
+  - `client/src/` — React sources and components
+  - `client/package.json` — scripts & dependencies
+- `data/` — runtime data
+  - `data/uploads/` — uploaded PDF files (persist here)
+  - `data/vector_db/` — Chroma/SQLite vector DB data (persist to reuse embeddings)
 
-Contributing
-- Fork and open a PR on the `develop` branch.
-- Run the backend and client locally, add tests for new features, and document behavior in `README.md`.
+## How the system works (brief)
 
-License
-- This repository includes a `LICENSE` file at the root.
----
+- Uploads land in `data/uploads`. When a PDF is processed, the pipeline extracts text, creates embeddings, and stores them in the Chroma-backed vector store under `data/vector_db`.
+- When the client issues a query, the backend retrieves context using the vector store and calls the configured LLM (see `server/utils/llm.py`) to generate a concise, faithful answer.
+
+## Common commands
+
+- Run backend (dev): `uvicorn server.api.main:app --reload --host 0.0.0.0 --port 8000`
+- Run frontend (dev): `cd client; npm run dev`
+- Build frontend for production: `cd client; npm run build`
+- Preview frontend build: `cd client; npm run preview`
+
+## Troubleshooting
+
+- Missing model API key or invalid model name: check `server/.env` and `server/utils/config.py`.
+- MongoDB connection errors: verify `MONGO_URI` and network access. The server logs connection errors but will still attempt to run if Mongo is not critical to the invoked endpoints.
+- Vector DB issues: ensure `data/vector_db` is writable by the process and not locked.
+
+## Tests & linting
+
+- Frontend lint: `cd client; npm run lint` (requires dev dependencies installed).
+- Consider adding Python tests (pytest) for server endpoints and unit logic; none are included by default.
+
+
+## License
+
+See the `LICENSE` file at the repository root for licensing information.
+
