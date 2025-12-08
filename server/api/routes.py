@@ -11,10 +11,10 @@ from server.utils.auth import get_current_user
 from server.utils.db import db_instance
 from server.utils.llm import generate_structured_summary, get_answer_from_pdf
 from server.utils.chatHistory import save_chat_message, get_chat_history, clear_chat_history
+from server.utils.promptSanitizer import sanitizePrompt
 
 router = APIRouter()
 
-# ScholarSense
 
 @router.post("/upload", response_model=SummarySchema)
 async def upload_pdf(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
@@ -71,12 +71,14 @@ async def chat_with_pdf(request: QuestionSchema, current_user: dict = Depends(ge
     try:
         print("[DEBUG] Received question:", request.question)
         # Sanitize input (basic)
-        clean_question = request.question.strip()
-        if not clean_question:
+        question = request.question.strip()
+        if not question:
             raise HTTPException(status_code=400, detail="Question cannot be empty")
 
         if not request.pdf_id:
             return {"error": "pdf_id is missing"}
+
+        clean_question = sanitizePrompt(question)
 
         pdf_record = await db_instance.db["pdfs"].find_one({
             "pdf_id": request.pdf_id,
@@ -117,6 +119,7 @@ async def chat_with_pdf(request: QuestionSchema, current_user: dict = Depends(ge
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.get("/documents")
 async def get_user_documents(current_user: dict = Depends(get_current_user)):
     try:
@@ -138,6 +141,7 @@ async def get_user_documents(current_user: dict = Depends(get_current_user)):
     except Exception as e:
         print(f"[ERROR] Fetching docs:{e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/history/{pdf_id}")
 async def get_history_by_id(pdf_id: str, current_user: dict = Depends(get_current_user)):
@@ -167,6 +171,7 @@ async def get_history_by_id(pdf_id: str, current_user: dict = Depends(get_curren
         "title": pdf_record.get("title"),
         "history": formatted_history
     }
+
 
 @router.delete("/document/{pdf_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_document(pdf_id: str, current_user: dict = Depends(get_current_user)):
