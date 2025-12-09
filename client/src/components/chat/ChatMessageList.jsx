@@ -1,7 +1,7 @@
 import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Bot, User as UserIcon, UploadCloud, Loader2 } from "lucide-react";
+import { Bot, User as UserIcon, UploadCloud, Loader2, BookOpen  } from "lucide-react";
 
 export default function ChatMessageList({
   activeDoc,
@@ -10,6 +10,7 @@ export default function ChatMessageList({
   uploading,
   onUpload,
 }) {
+  console.log("[DEBUG] ChatMessageList messages:", messages);
   if (!activeDoc) {
     // EMPTY STATE
     return (
@@ -89,8 +90,8 @@ export default function ChatMessageList({
                 }
                 `}
           >
-            {/* MARKDOWN RENDERING LOGIC 
-            */}
+            {/* MARKDOWN RENDERING LOGIC
+             */}
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={{
@@ -143,6 +144,36 @@ export default function ChatMessageList({
             >
               {msg.content}
             </ReactMarkdown>
+
+            {/* Answer Sources */}
+            {msg.role !== "user" && msg.source && msg.source.length > 0 && (
+              <div className="mt-4 pt-3 border-t border-slate-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <BookOpen className="w-3 h-3 text-slate-400" />
+                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    Sources
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {msg.source.map((source, idx) => (
+                    <span
+                      key={idx}
+                      className="inline-flex items-center px-2 py-1 bg-slate-50 text-slate-600 text-xs rounded-md border border-slate-200"
+                    >
+                      {/* Handle rendering based on what 'source' contains. 
+                         If it's a string ("Page 1"), render it. 
+                         If it's an object, render a specific property.
+                      */}
+                      {typeof source === "object"
+                        ? source.page_label || JSON.stringify(source)
+                        : source}
+
+                        {console.log("[DEBUG] Rendering source:", source)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       ))}
