@@ -40,7 +40,7 @@ def generate_structured_summary(file_path: str) -> str:
 
     2. **Problem Statement**
        - Identify the main research problem or gap the authors aim to address.
-       - State it clearly in 2–4 sentences.
+       - State it clearly in 2-4 sentences.
 
     3. **Methodology**
        - Describe the methods, techniques, models, datasets, or experiments used.
@@ -51,7 +51,7 @@ def generate_structured_summary(file_path: str) -> str:
        - Mention specific performance metrics or results if present.
 
     5. **Conclusion**
-       - Summarize the authors’ final insights, implications, or next steps.
+       - Summarize the authors' final insights, implications, or next steps.
 
     --------------------------
     ### Research Paper Text:
@@ -65,24 +65,24 @@ def generate_structured_summary(file_path: str) -> str:
 
     try:
         result = chain.invoke({"text": full_text})
-        print(f"DBUG Results text: {result.content}")
+        # print(f"DBUG Results text: {result.content}")
         return result.content
     except Exception as e:
         return f"Error generating summary: {str(e)}"
 
 
 def get_external_context(question: str) -> str:
-    print(f"[DEBUG] Fetching external context for: {question}")
+    # print(f"[DEBUG] Fetching external context for: {question}")
     external_context = ""
 
-    # 1. Try Wikipedia first
+    # Try Wikipedia first
     try:
         wiki_res = wikipedia.run(question)
         external_context += f"\n\n--- WIKIPEDIA RESULTS ---\n{wiki_res}"
     except Exception as e:
         print(f"Wiki Error: {e}")
 
-    # 2. Try DuckDuckGo
+    # Try DuckDuckGo
     try:
         ddg_res = search.run(question)
         external_context += f"\n\n--- INTERNET SEARCH RESULTS ---\n{ddg_res}"
@@ -99,7 +99,7 @@ def get_answer_from_pdf(question: str, pdf_id: str, chat_history: list, study_mo
             "source_documents": []
         }
 
-    # 1. Standard MMR Retrieval
+    # Standard MMR Retrieval
     vector_store = get_vector_store(pdf_id)
     retriever = vector_store.as_retriever(
         search_type="mmr",
@@ -144,14 +144,14 @@ def get_answer_from_pdf(question: str, pdf_id: str, chat_history: list, study_mo
     except Exception as e:
         print(f"Error loading first page: {e}")
 
-    # 3. Combine Context
+    # Combine Context
     # We strip newlines to help Gemini process dense text better
     retrieved_content = "\n\n".join([d.page_content.replace("\n", " ") for d in docs])
 
     # Prepend the first page text. If empty, it adds nothing.
     full_context = first_page_text + "\n\n" + retrieved_content + "\n\n" + external_context
 
-    # 4. Format History
+    # Format History
     formatted_history = "\n".join(
         [f"{m['role']}: {m['message']}" for m in chat_history]
     )
@@ -161,13 +161,13 @@ def get_answer_from_pdf(question: str, pdf_id: str, chat_history: list, study_mo
     feedback = ""
 
     for attempt in range(MAX_RETRIES):
-        print(f"[DEBUG] Generate Attempt {attempt + 1}/{MAX_RETRIES}")
+        # print(f"[DEBUG] Generate Attempt {attempt + 1}/{MAX_RETRIES}")
 
-        # 5. Prompting
+        # Prompting
         if study_mode:
             # TEACHER PROMPT
             template = """
-                You are an expert AI Tutor. Your goal is to TEACH the user about the topic using the provided content.
+                You are an expert Teacher. Your goal is to TEACH the user about the topic using the provided content.
 
                 Sources Available:
                 1. A PDF Document uploaded by the user.
@@ -191,7 +191,7 @@ def get_answer_from_pdf(question: str, pdf_id: str, chat_history: list, study_mo
                 {question}
                 """
         else:
-            # STANDARD RAG PROMPT (Your existing one, slightly cleaned)
+            # STANDARD RAG PROMPT
             template = """
                 You are a research assistant. Answer the User Question using ONLY the provided context.
 
@@ -248,11 +248,11 @@ def get_answer_from_pdf(question: str, pdf_id: str, chat_history: list, study_mo
             reasoning = eval_result.get("reasoning", "No reasoning provided.")
 
             if is_relevant and is_faithful:
-                print("[DEBUG] Answer accepted by evaluator.")
+                # print("[DEBUG] Answer accepted by evaluator.")
                 break
             else:
-                print(f"[DEBUG] Answer rejected. Relevant: {is_relevant}, Faithful: {is_faithful}")
-                print(f"[DEBUG] Reasoning: {reasoning}")
+                # print(f"[DEBUG] Answer rejected. Relevant: {is_relevant}, Faithful: {is_faithful}")
+                # print(f"[DEBUG] Reasoning: {reasoning}")
                 feedback = reasoning
         except Exception as e:
             current_answer = f"Error generating answer: {str(e)}"
