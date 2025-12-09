@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  # ----------------------------
+  # 1. Backend API (FastAPI)
+  # ----------------------------
+  backend:
+    build: ./server
+    container_name: research_backend
+    command: uvicorn server.api.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./server:/app       # Sync code changes live
+      - pdf_data:/app/data  # Shared volume for PDF storage
+    env_file:
+      - ./server/.env
+    environment:
+      - MONGO_URI=mongodb://mongo:27017
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    depends_on:
+      - mongo
+      - redis
+
+  # ----------------------------
+  # 2. Background Worker (Celery)
+  # ----------------------------
+  worker:
+    build: ./server
+    container_name: research_worker
+    # Note: No need for --pool=solo here, Docker runs on Linux!
+    command: celery -A server.worker.celery worker --loglevel=info
+    volumes:
+      - ./server:/app       # Sync code changes live
+      - pdf_data:/app/data  # MUST match backend volume to read PDFs
+    env_file:
+      - ./server/.env
+    environment:
+      - MONGO_URI=mongodb://mongo:27017
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    depends_on:
+      - mongo
+      - redis
+      - backend
+
+  # ----------------------------
+  # 3. Frontend (React)
+  # ----------------------------
+  frontend:
+    build: ./client
+    container_name: research_frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./client:/app
+      - /app/node_modules # Prevent host node_modules from overwriting container
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    # This ensures the browser opens nicely on Windows
+    stdin_open: true
+    tty: true
+
+  # ----------------------------
+  # 4. Redis (Message Broker)
+  # ----------------------------
+  redis:
+    image: redis:alpine
+    container_name: research_redis
+    ports:
+      - "6379:6379"
+
+  # ----------------------------
+  # 5. MongoDB (Database)
+  # ----------------------------
+  mongo:
+    image: mongo:latest
+    container_name: research_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+# Persist data so PDFs and DB don't vanish on restart
+volumes:
+  mongo_data:
+  pdf_data:
