@@ -22,18 +22,18 @@ async def upload_pdf(file: UploadFile = File(...), current_user: dict = Depends(
         raise HTTPException(status_code=400, detail="Only PDF files are allowed")
 
     try:
-        print("[DEBUG] inside try block")
+        # print("[DEBUG] inside try block")
         # 1. Save File
         pdf_id, file_path = await save_pdf_file(file)
-        print(f"[DEBUG] file_path: {file_path} & pdf_id: {pdf_id}")
+        # print(f"[DEBUG] file_path: {file_path} & pdf_id: {pdf_id}")
         # 2. Process Vectors (Compute intensive - strictly, should be background task,
         # but for this assignment we await to ensure RAG is ready immediately)
         process_pdf_to_vector_db(file_path, pdf_id)
 
-        print("[DEBUG] after process_pdf_to_vector_db")
+        # print("[DEBUG] after process_pdf_to_vector_db")
         # 3. Generate Summary
         summary_text = generate_structured_summary(file_path)
-        print("[DEBUG] filepath passed")
+        # print("[DEBUG] filepath passed")
 
         match = re.search(r"\*\*Title:\*\*\s*(.*)", summary_text)
         if match:
@@ -51,7 +51,7 @@ async def upload_pdf(file: UploadFile = File(...), current_user: dict = Depends(
         }
 
         await db_instance.db["pdfs"].insert_one(pdf_document)
-        print("[DEBUG] PDF document inserted into DB")
+        # print("[DEBUG] PDF document inserted into DB")
 
         QuestionSchema(pdf_id=pdf_id, question="")
 
@@ -69,7 +69,7 @@ async def upload_pdf(file: UploadFile = File(...), current_user: dict = Depends(
 @router.post("/chat", response_model=AnswerSchema)
 async def chat_with_pdf(request: QuestionSchema, current_user: dict = Depends(get_current_user)):
     try:
-        print("[DEBUG] Received question:", request.question)
+        # print("[DEBUG] Received question:", request.question)
         # Sanitize input (basic)
         question = request.question.strip()
         if not question:
@@ -93,23 +93,23 @@ async def chat_with_pdf(request: QuestionSchema, current_user: dict = Depends(ge
 
         # Get History
         history = await get_chat_history(request.pdf_id)
-        print("[DEBUG] Chat history retrieved:", history)
+        # print("[DEBUG] Chat history retrieved:", history)
 
         # Get RAG Answer
         result = get_answer_from_pdf(question=clean_question, pdf_id=request.pdf_id, chat_history=history,
                                      study_mode=request.study_mode)
-        print("[DEBUG] Answer retrieved:", result)
+        # print("[DEBUG] Answer retrieved:", result)
         answer_text = result['result']
         source_documents = result['source_documents']
-        print("[DEBUG] Final answer text:", answer_text)
+        # print("[DEBUG] Final answer text:", answer_text)
 
         # Save to DB (User query)
         await save_chat_message(request.pdf_id, "user", clean_question)
-        print("[DEBUG] Chat message saved")
+        # print("[DEBUG] Chat message saved")
 
         # Save to DB (AI Response)
         await save_chat_message(request.pdf_id, "assistant", answer_text, sources=source_documents)
-        print("[DEBUG] AI response saved")
+        # print("[DEBUG] AI response saved")
 
         return AnswerSchema(
             answer=answer_text,
@@ -195,5 +195,5 @@ async def delete_document(pdf_id: str, current_user: dict = Depends(get_current_
 
         return None
     except Exception as e:
-        print(f"[ERROR] Deleting document:{e}")
+        # print(f"[ERROR] Deleting document:{e}")
         raise HTTPException(status_code=500, detail=f"Failed to delete document: {e}")
