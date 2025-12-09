@@ -6,17 +6,18 @@ from fastapi.params import Depends
 from server.schemas.QuestionSchema import QuestionSchema
 from server.schemas.AnswerSchema import AnswerSchema
 from server.schemas.SummarySchema import SummarySchema
-from server.utils.PDFProcess import save_pdf_file, process_pdf_to_vector_db
+from server.utils.PDFProcess import save_pdf_file
 from server.utils.auth import get_current_user
 from server.utils.db import db_instance
-from server.utils.llm import generate_structured_summary, get_answer_from_pdf
+from server.utils.llm import get_answer_from_pdf
+from server.worker import process_pdf_task
 from server.utils.chatHistory import save_chat_message, get_chat_history, clear_chat_history
 from server.utils.promptSanitizer import sanitizePrompt
 
 router = APIRouter()
 
 
-@router.post("/upload", response_model=SummarySchema)
+@router.post("/upload", response_model=dict, status_code=202)
 async def upload_pdf(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
     if not file.filename.endswith('.pdf'):
         raise HTTPException(status_code=400, detail="Only PDF files are allowed")
@@ -26,41 +27,33 @@ async def upload_pdf(file: UploadFile = File(...), current_user: dict = Depends(
         # 1. Save File
         pdf_id, file_path = await save_pdf_file(file)
         print(f"[DEBUG] file_path: {file_path} & pdf_id: {pdf_id}")
-        # 2. Process Vectors (Compute intensive - strictly, should be background task,
-        # but for this assignment we await to ensure RAG is ready immediately)
-        process_pdf_to_vector_db(file_path, pdf_id)
 
-        print("[DEBUG] after process_pdf_to_vector_db")
-        # 3. Generate Summary
-        summary_text = generate_structured_summary(file_path)
-        print("[DEBUG] filepath passed")
-
-        match = re.search(r"\*\*Title:\*\*\s*(.*)", summary_text)
-        if match:
-            title = match.group(1).strip()
-        else:
-            title = "Unknown Title"
-
+        # Create a pending DB record and enqueue a background task to process the PDF.
         pdf_document = {
             "pdf_id": pdf_id,
             "user_id": current_user["_id"],
             "filename": file.filename,
-            "title": title,
-            "summary": summary_text,
+            "title": None,
+            "summary": None,
+            "status": "pending",
             "created_at": datetime.utcnow()
         }
 
         await db_instance.db["pdfs"].insert_one(pdf_document)
-        print("[DEBUG] PDF document inserted into DB")
+        print("[DEBUG] PDF document inserted into DB with status pending")
 
-        QuestionSchema(pdf_id=pdf_id, question="")
+        # Enqueue processing task (Celery)
+        try:
+            process_pdf_task.delay(file_path, pdf_id, str(current_user["_id"]))
+            print("[DEBUG] Enqueued process_pdf_task")
+        except Exception as e:
+            print(f"[ERROR] Could not enqueue Celery task: {e}")
+            # mark as failed
+            await db_instance.db["pdfs"].update_one({"pdf_id": pdf_id}, {"$set": {"status": "failed", "error": str(e)}})
+            raise HTTPException(status_code=500, detail="Failed to enqueue processing task")
 
-        return SummarySchema(
-            pdf_id=pdf_id,
-            title=title,
-            file_name=file.filename,
-            summary=summary_text
-        )
+        # Return accepted with pdf id — client should poll status or check /documents
+        return {"pdf_id": pdf_id, "status": "processing"}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
