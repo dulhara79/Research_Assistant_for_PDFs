@@ -1,7 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import {
-  Sparkles,
   ArrowRight,
   FileText,
   MessageSquare,
@@ -19,7 +18,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold text-xl tracking-tight text-slate-900">
             <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-white" />
+              <MessageSquare className="w-5 h-5 text-white" />
             </div>
             <span>ScholarSense</span>
           </div>
@@ -232,7 +231,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2 font-bold text-lg text-slate-900">
             <div className="w-6 h-6 bg-slate-900 rounded flex items-center justify-center">
-              <Sparkles className="w-3 h-3 text-white" />
+              <MessageSquare className="w-3 h-3 text-white" />
             </div>
             <span>ScholarSense</span>
           </div>

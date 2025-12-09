@@ -25,10 +25,52 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  // Fetch Documents on Load 
+  // Fetch Documents on Load
   useEffect(() => {
     fetchDocuments();
   }, []);
+
+  const handleFileUpload = async (file) => {
+    if (!file) return;
+    setUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await api.post("/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      const newDoc = {
+        pdf_id: res.data.pdf_id,
+        title: res.data.title,
+        file_name: res.data.file_name,
+        summary: res.data.summary,
+      };
+      setDocuments([newDoc, ...documents]);
+      setActiveDoc(newDoc);
+      setSummary(res.data.summary);
+      setMessages([]);
+      setIsSummaryOpen(true);
+    } catch (err) {
+      alert("Failed to upload PDF");
+      console.error(err);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const onFileChange = (e) => {
+    const file = e.target.files[0];
+    handleFileUpload(file);
+  };
+
+  const handleNewChatClick = () => {
+    setActiveDoc(null);
+    setMessages([]);
+    setSummary("");
+    setInputMessage("");
+  };
 
   const fetchDocuments = async () => {
     try {
@@ -61,35 +103,35 @@ export default function ChatPage() {
     }
   };
 
-  const onFileChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setUploading(true);
-    const formData = new FormData();
-    formData.append("file", file);
+  // const onFileChange = async (e) => {
+  //   const file = e.target.files[0];
+  //   if (!file) return;
+  //   setUploading(true);
+  //   const formData = new FormData();
+  //   formData.append("file", file);
 
-    try {
-      const res = await api.post("/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      const newDoc = {
-        pdf_id: res.data.pdf_id,
-        title: res.data.title,
-        file_name: res.data.file_name,
-        summary: res.data.summary,
-      };
-      setDocuments([newDoc, ...documents]);
-      setActiveDoc(newDoc);
-      setSummary(res.data.summary);
-      setMessages([]);
-      setIsSummaryOpen(true);
-    } catch (err) {
-      alert("Failed to upload PDF");
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
-  };
+  //   try {
+  //     const res = await api.post("/upload", formData, {
+  //       headers: { "Content-Type": "multipart/form-data" },
+  //     });
+  //     const newDoc = {
+  //       pdf_id: res.data.pdf_id,
+  //       title: res.data.title,
+  //       file_name: res.data.file_name,
+  //       summary: res.data.summary,
+  //     };
+  //     setDocuments([newDoc, ...documents]);
+  //     setActiveDoc(newDoc);
+  //     setSummary(res.data.summary);
+  //     setMessages([]);
+  //     setIsSummaryOpen(true);
+  //   } catch (err) {
+  //     alert("Failed to upload PDF");
+  //   } finally {
+  //     setUploading(false);
+  //     if (fileInputRef.current) fileInputRef.current.value = "";
+  //   }
+  // };
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -134,9 +176,9 @@ export default function ChatPage() {
     }
   };
 
-  const handleNewChatClick = () => {
-    fileInputRef.current?.click();
-  };
+  // const handleNewChatClick = () => {
+  //   fileInputRef.current?.click();
+  // };
 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden relative text-slate-900 font-sans">
@@ -175,12 +217,19 @@ export default function ChatPage() {
         />
 
         <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar scroll-smooth bg-slate-50/50">
-          <ChatMessageList
+          {/* <ChatMessageList
             activeDoc={activeDoc}
             messages={messages}
             loading={loading}
             uploading={uploading}
             onUploadClick={handleNewChatClick}
+          /> */}
+          <ChatMessageList
+            activeDoc={activeDoc}
+            messages={messages}
+            loading={loading}
+            uploading={uploading}
+            onUpload={handleFileUpload}
           />
         </div>
 
