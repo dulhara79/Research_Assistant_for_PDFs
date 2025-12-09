@@ -113,6 +113,7 @@ async def logout(token: str = Depends(oauth2_scheme)):
 
     return {"message": "Successfully logged out"}
 
+
 @router.put("/me", response_model=UserOutputSchema)
 async def update_user(
         update_data: UserUpdateSchema,
@@ -140,6 +141,7 @@ async def update_user(
 async def delete_user(current_user: dict = Depends(get_current_user)):
     await db_instance.db["users"].delete_one({"_id": ObjectId(current_user["_id"])})
     return None
+
 
 @router.post("/send-otp", status_code=status.HTTP_200_OK)
 async def send_otp(otp_data: OTPSendSchema, background_tasks: BackgroundTasks):
@@ -173,6 +175,7 @@ async def send_otp(otp_data: OTPSendSchema, background_tasks: BackgroundTasks):
 
     return {"message": "OTP sent successfully"}
 
+
 @router.post("/verify-otp", response_model=TokenSchema)
 async def verify_otp(otp_data: OTPVerifySchema):
     user = await db_instance.db["users"].find_one({"email": otp_data.email})
@@ -200,9 +203,6 @@ async def verify_otp(otp_data: OTPVerifySchema):
         {"$unset": {"otp_code": "", "otp_expires_at": ""}}
     )
 
-
     access_token = create_access_token(data={"sub": str(user["_id"])})
 
     return {"access_token": access_token, "token_type": "bearer"}
-
-
