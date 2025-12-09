@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { BookOpen } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import Button from "../components/authUI/Button";
 import Input from "../components/authUI/Input";
 
@@ -101,7 +101,7 @@ export default function Register() {
         <div className="bg-white/80 backdrop-blur-xl border border-slate-200 rounded-2xl p-8 shadow-xl">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-600/20">
-              <BookOpen className="text-white w-6 h-6" />
+              <MessageSquare className="text-white w-6 h-6" />
             </div>
             <h1 className="text-2xl font-bold text-slate-900">
               Create Account
