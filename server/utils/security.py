@@ -46,7 +46,7 @@ def decrypt_message(encrypted_message: str):
         decrypted_bytes = cipher_suite.decrypt(encrypted_message.encode())
         return decrypted_bytes.decode("utf-8")
     except Exception as e:
-        print(f"[DEBUG] Decryption error: {e}")
+        # print(f"[DEBUG] Decryption error: {e}")
         raise ValueError("Invalid Key or Corrupted Data")
 
 
