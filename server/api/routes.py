@@ -108,7 +108,7 @@ async def chat_with_pdf(request: QuestionSchema, current_user: dict = Depends(ge
         print("[DEBUG] Chat message saved")
 
         # Save to DB (AI Response)
-        await save_chat_message(request.pdf_id, "assistant", answer_text, source=source_documents)
+        await save_chat_message(request.pdf_id, "assistant", answer_text, sources=source_documents)
         print("[DEBUG] AI response saved")
 
         return AnswerSchema(
@@ -165,7 +165,7 @@ async def get_history_by_id(pdf_id: str, current_user: dict = Depends(get_curren
             formatted_history.append({
                 "role": "bot" if msg['role'] == "assistant" else "user",
                 "content": msg["message"],
-                "source": msg["source"]
+                "sources": msg["sources"]
             })
 
     return {
