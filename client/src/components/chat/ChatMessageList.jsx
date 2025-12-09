@@ -1,4 +1,6 @@
 import React from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Bot, User as UserIcon, UploadCloud, Loader2 } from "lucide-react";
 
 export default function ChatMessageList({
@@ -6,10 +8,10 @@ export default function ChatMessageList({
   messages,
   loading,
   uploading,
-  onUploadClick, // Pass the handler to trigger file input
+  onUpload,
 }) {
   if (!activeDoc) {
-    // EMPTY STATE 
+    // EMPTY STATE
     return (
       <div className="h-full flex flex-col items-center justify-center text-slate-500 space-y-6">
         <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm border border-slate-200">
@@ -29,7 +31,9 @@ export default function ChatMessageList({
         </p>
         {!uploading && (
           <button
-            onClick={onUploadClick}
+            onClick={() =>
+              document.querySelector('input[type="file"]')?.click()
+            } // Trigger the hidden input in parent
             className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-all shadow-lg shadow-indigo-200"
           >
             Upload PDF
@@ -56,6 +60,7 @@ export default function ChatMessageList({
             msg.role === "user" ? "flex-row-reverse" : ""
           }`}
         >
+          {/* Avatar */}
           <div
             className={`
                 w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm
@@ -73,9 +78,10 @@ export default function ChatMessageList({
             )}
           </div>
 
+          {/* Message Content */}
           <div
             className={`
-                p-4 rounded-2xl text-sm leading-relaxed shadow-sm
+                p-4 rounded-2xl text-sm leading-relaxed shadow-sm overflow-hidden
                 ${
                   msg.role === "user"
                     ? "bg-indigo-600 text-white rounded-tr-sm"
@@ -83,11 +89,65 @@ export default function ChatMessageList({
                 }
                 `}
           >
-            {msg.content}
+            {/* MARKDOWN RENDERING LOGIC 
+            */}
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                // Bold text
+                strong: ({ node, ...props }) => (
+                  <span className="font-bold" {...props} />
+                ),
+                // Headings
+                h1: ({ node, ...props }) => (
+                  <h1 className="text-lg font-bold mt-2 mb-1" {...props} />
+                ),
+                h2: ({ node, ...props }) => (
+                  <h2 className="text-base font-bold mt-2 mb-1" {...props} />
+                ),
+                h3: ({ node, ...props }) => (
+                  <h3 className="text-sm font-bold mt-2 mb-1" {...props} />
+                ),
+                // Lists
+                ul: ({ node, ...props }) => (
+                  <ul className="list-disc pl-4 space-y-1 mb-2" {...props} />
+                ),
+                ol: ({ node, ...props }) => (
+                  <ol className="list-decimal pl-4 space-y-1 mb-2" {...props} />
+                ),
+                li: ({ node, ...props }) => <li className="pl-1" {...props} />,
+                // Paragraphs
+                p: ({ node, ...props }) => (
+                  <p className="mb-2 last:mb-0" {...props} />
+                ),
+                // Code blocks
+                code: ({ node, inline, className, children, ...props }) => {
+                  return inline ? (
+                    <code
+                      className={`bg-slate-200 text-slate-800 px-1 py-0.5 rounded ${
+                        msg.role === "user" ? "bg-indigo-500 text-white" : ""
+                      }`}
+                      {...props}
+                    >
+                      {children}
+                    </code>
+                  ) : (
+                    <div className="overflow-x-auto bg-slate-800 text-slate-100 p-2 rounded-md my-2">
+                      <code className="block whitespace-pre" {...props}>
+                        {children}
+                      </code>
+                    </div>
+                  );
+                },
+              }}
+            >
+              {msg.content}
+            </ReactMarkdown>
           </div>
         </div>
       ))}
 
+      {/* Loading Bubble */}
       {loading && (
         <div className="flex gap-4 max-w-3xl mx-auto">
           <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center flex-shrink-0">
