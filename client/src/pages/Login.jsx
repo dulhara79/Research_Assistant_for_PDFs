@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { Sparkles, ArrowRight } from "lucide-react";
+import { MessageSquare, ArrowRight } from "lucide-react";
 import Button from "../components/authUI/Button";
 import Input from "../components/authUI/Input";
 
@@ -49,7 +49,7 @@ export default function Login() {
 
         <div className="relative z-10 p-12 max-w-lg">
           <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mb-8 shadow-2xl shadow-indigo-500/30">
-            <Sparkles className="w-8 h-8 text-white" />
+            <MessageSquare className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-5xl font-bold text-slate-900 mb-6 leading-tight">
             Research faster with AI.
