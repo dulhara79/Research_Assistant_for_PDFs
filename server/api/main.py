@@ -14,11 +14,12 @@ app = FastAPI(title="Research Assistant API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins = ["*"],
-    allow_credentials = True,
+    allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.on_event("startup")
 async def startup_event():
@@ -28,6 +29,7 @@ async def startup_event():
     except Exception as e:
         print(f"[ERROR] An error occurred during startup: {e}")
 
+
 @app.on_event("shutdown")
 async def shutdown_event():
     try:
@@ -36,12 +38,14 @@ async def shutdown_event():
     except Exception as e:
         print(f"[ERROR] An error occurred during shutdown: {e}")
 
+
 # Ensure data directory exists
 os.makedirs("data", exist_ok=True)
 app.mount("/data", StaticFiles(directory="data"), name="data")
 
 app.include_router(api_router, prefix="/api")
 app.include_router(user_router, prefix="/api/auth")
+
 
 @app.get("/")
 def read_root():

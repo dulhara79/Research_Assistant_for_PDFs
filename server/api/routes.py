@@ -96,7 +96,8 @@ async def chat_with_pdf(request: QuestionSchema, current_user: dict = Depends(ge
         print("[DEBUG] Chat history retrieved:", history)
 
         # Get RAG Answer
-        result = get_answer_from_pdf(question=clean_question, pdf_id=request.pdf_id, chat_history=history, study_mode=request.study_mode)
+        result = get_answer_from_pdf(question=clean_question, pdf_id=request.pdf_id, chat_history=history,
+                                     study_mode=request.study_mode)
         print("[DEBUG] Answer retrieved:", result)
         answer_text = result['result']
         source_documents = result['source_documents']
@@ -107,7 +108,7 @@ async def chat_with_pdf(request: QuestionSchema, current_user: dict = Depends(ge
         print("[DEBUG] Chat message saved")
 
         # Save to DB (AI Response)
-        await save_chat_message(request.pdf_id, "assistant", answer_text)
+        await save_chat_message(request.pdf_id, "assistant", answer_text, source=source_documents)
         print("[DEBUG] AI response saved")
 
         return AnswerSchema(
@@ -163,7 +164,8 @@ async def get_history_by_id(pdf_id: str, current_user: dict = Depends(get_curren
         if msg['role'] != 'system':
             formatted_history.append({
                 "role": "bot" if msg['role'] == "assistant" else "user",
-                "content": msg["message"]
+                "content": msg["message"],
+                "source": msg["source"]
             })
 
     return {

@@ -13,14 +13,17 @@ from server.utils.config import UPLOAD_DIR, VECTOR_DB_DIR, EMBEDDING_MODEL, GEMI
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(VECTOR_DB_DIR, exist_ok=True)
 
+
 def sanitize_filename(filename: str):
     filename = re.sub(r'[\\/*?:"<>|]', "", filename)
     filename = filename.replace(" ", "_")
     return filename
 
+
 def get_embeddings():
     # return GoogleGenerativeAIEmbeddings(model=EMBEDDING_MODEL, google_api_key=GEMINAI_API_KEY)
     return HuggingFaceEmbeddings(model_name="BAAI/bge-small-en-v1.5")
+
 
 async def save_pdf_file(file: UploadFile) -> tuple[str, str]:
     pdf_id = str(uuid4())
@@ -51,6 +54,7 @@ def process_pdf_to_vector_db(file_path: str, pdf_id: str):
     )
 
     return vector_store
+
 
 def get_vector_store(pdf_id: str):
     """

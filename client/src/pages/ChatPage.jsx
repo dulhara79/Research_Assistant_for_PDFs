@@ -94,9 +94,13 @@ export default function ChatPage() {
       const formattedHistory = (res.data.history || []).map((msg) => ({
         ...msg,
         role: msg.role === "bot" ? "assistant" : msg.role,
+        sources: msg.sources || [],
       }));
       setMessages(formattedHistory);
       setSummary(doc?.summary || "No summary available.");
+      
+      console.log("[DEBUG] Fetched history:", formattedHistory);
+
       if (window.innerWidth >= 1280) setIsSummaryOpen(true);
     } catch (err) {
       console.error(err);
@@ -150,7 +154,7 @@ export default function ChatPage() {
       });
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: res.data.answer },
+        { role: "assistant", content: res.data.answer, sources: res.data.sources || [] },
       ]);
     } catch (err) {
       setMessages((prev) => [
