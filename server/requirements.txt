@@ -23,3 +23,5 @@ wikipedia
 duckduckgo-search
 langchain-tools
 ddgs
+celery[redis]
+redis
