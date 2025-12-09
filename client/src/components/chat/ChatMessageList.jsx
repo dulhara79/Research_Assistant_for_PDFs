@@ -17,7 +17,7 @@ export default function ChatMessageList({
   onUpload,
   source,
 }) {
-  console.log("[DEBUG] ChatMessageList messages:", messages);
+//   console.log("[DEBUG] ChatMessageList messages:", messages);
   if (!activeDoc) {
     // EMPTY STATE
     return (
