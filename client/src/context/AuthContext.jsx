@@ -19,7 +19,7 @@ export const AuthProvider = ({ children }) => {
       try {
         const { data } = await api.get("/auth/me");
         setUser(data);
-        console.log("[DEBUG] User data fetched:", data);
+//         console.log("[DEBUG] User data fetched:", data);
       } catch (error) {
         if (error.response && error.response.status === 401) {
         localStorage.removeItem("token");
@@ -38,13 +38,13 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     await api.post("/auth/register", userData);
-    console.log(`[DEBUG] Registered user Data: ${userData}`);
+//     console.log(`[DEBUG] Registered user Data: ${userData}`);
     // await login(userData.email, userData.password);
   };
 
   const verifyOtp = async (email, otp) => {
     const { data } = await api.post("/auth/verify-otp", { email, otp });
-    console.log(`[DEBUG] Verified OTP for data: ${data}`);
+//     console.log(`[DEBUG] Verified OTP for data: ${data}`);
     localStorage.setItem("token", data.access_token);
     await checkUserLoggedIn(); 
     navigate("/chat"); 
