@@ -49,6 +49,7 @@ def decrypt_message(encrypted_message: str):
         print(f"[DEBUG] Decryption error: {e}")
         raise ValueError("Invalid Key or Corrupted Data")
 
+
 def generate_otp(length=6) -> str:
     """Generate a random numeric OTP"""
     return ''.join(random.choices(string.digits, k=length))
