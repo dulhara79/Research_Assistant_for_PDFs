@@ -1,5 +1,5 @@
-import React from "react";
-import { Send } from "lucide-react";
+import React, { useMemo } from "react";
+import { Send, AlertCircle } from "lucide-react";
 import StudyModeToggle from "./StudyModeToggle";
 
 export default function ChatInput({
@@ -9,12 +9,32 @@ export default function ChatInput({
   loading,
   isStudyMode,
   setIsStudyMode,
-}) {
+})
+ {
+  const MAX_WORDS = 1000;
+
+  const wordCount = useMemo(() => {
+    if (!inputMessage.trim()) return 0;
+    // return inputMessage.trim().split(/\s+/).length;
+    return inputMessage.trim().length;
+  }, [inputMessage]);
+
+  const isOverLimit = wordCount > MAX_WORDS;
+
   return (
-    <div className="p-4 border-t border-slate-200 bg-white">
+<div className="p-4 border-t border-slate-200 bg-white">
       <div className="max-w-3xl mx-auto">
+        <div className="flex justify-between items-end mb-2">
         {/* The Toggle Component */}
         <StudyModeToggle isStudyMode={isStudyMode} onToggle={setIsStudyMode} />
+        <div
+            className={`text-xs font-medium transition-colors ${
+              isOverLimit ? "text-red-500" : "text-slate-400"
+            }`}
+          >
+            {wordCount} / {MAX_WORDS} words
+          </div>
+        </div>
 
         <form onSubmit={handleSendMessage} className="relative">
           <input
