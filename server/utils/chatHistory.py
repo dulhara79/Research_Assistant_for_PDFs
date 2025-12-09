@@ -3,7 +3,7 @@ from server.utils.db import db_instance
 from server.utils.security import encrypt_message, decrypt_message
 
 
-async def save_chat_message(pdf_id: str, role: str, message: str, source: str = "user question"):
+async def save_chat_message(pdf_id: str, role: str, message: str, sources: str = "user question"):
     collection = db_instance.db["chat_history"]
 
     encrypted_message = encrypt_message(message)
@@ -11,7 +11,7 @@ async def save_chat_message(pdf_id: str, role: str, message: str, source: str = 
         "pdf_id": pdf_id,
         "role": role,
         "message": encrypted_message,
-        "source": source,
+        "sources": sources,
         "timestamp": datetime.utcnow()
     })
 
@@ -23,7 +23,7 @@ async def get_chat_history(pdf_id: str):
         chat_history.append({
             "role": doc["role"],
             "message": decrypt_message(doc["message"]),
-            "source": doc["source"],
+            "sources": doc["sources"],
         })
     return chat_history
 

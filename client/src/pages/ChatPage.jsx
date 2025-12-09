@@ -25,13 +25,24 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  // Fetch Documents on Load
+  // Fetch documents on first load
   useEffect(() => {
     fetchDocuments();
   }, []);
 
+  const fetchDocuments = async () => {
+    try {
+      const res = await api.get("/documents");
+      setDocuments(res.data || []);
+    } catch (err) {
+      console.error("Failed to load documents", err);
+    }
+  };
+
+  // PDF Upload Handler
   const handleFileUpload = async (file) => {
     if (!file) return;
+
     setUploading(true);
     const formData = new FormData();
     formData.append("file", file);
@@ -40,13 +51,15 @@ export default function ChatPage() {
       const res = await api.post("/upload", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
+
       const newDoc = {
         pdf_id: res.data.pdf_id,
         title: res.data.title,
         file_name: res.data.file_name,
         summary: res.data.summary,
       };
-      setDocuments([newDoc, ...documents]);
+
+      setDocuments((prev) => [newDoc, ...prev]);
       setActiveDoc(newDoc);
       setSummary(res.data.summary);
       setMessages([]);
@@ -61,10 +74,39 @@ export default function ChatPage() {
   };
 
   const onFileChange = (e) => {
-    const file = e.target.files[0];
-    handleFileUpload(file);
+    handleFileUpload(e.target.files[0]);
   };
 
+  // Document Selection
+  const handleSelectDocument = async (pdfId) => {
+    const doc = documents.find((d) => d.pdf_id === pdfId);
+    if (!doc) return;
+
+    setActiveDoc(doc);
+    setSummary(doc.summary || "Loading...");
+    setMessages([]);
+
+    if (window.innerWidth < 1024) setIsSidebarOpen(false);
+
+    try {
+      const res = await api.get(`/history/${pdfId}`);
+
+      const formattedHistory = (res.data.history || []).map((msg) => ({
+        ...msg,
+        role: msg.role === "bot" ? "assistant" : msg.role,
+        sources: msg.sources || [],
+      }));
+
+      setMessages(formattedHistory);
+      setSummary(doc.summary || "No summary available.");
+
+      if (window.innerWidth >= 1280) setIsSummaryOpen(true);
+    } catch (err) {
+      console.error("Failed to fetch history", err);
+    }
+  };
+
+  // New Chat
   const handleNewChatClick = () => {
     setActiveDoc(null);
     setMessages([]);
@@ -72,91 +114,34 @@ export default function ChatPage() {
     setInputMessage("");
   };
 
-  const fetchDocuments = async () => {
-    try {
-      const res = await api.get("/documents");
-      setDocuments(res.data);
-    } catch (err) {
-      console.error("Failed to load documents", err);
-    }
-  };
-
-  const handleSelectDocument = async (pdfId) => {
-    const doc = documents.find((d) => d.pdf_id === pdfId);
-    setActiveDoc(doc);
-    setSummary(doc?.summary || "Loading...");
-    setMessages([]);
-
-    if (window.innerWidth < 1024) setIsSidebarOpen(false);
-
-    try {
-      const res = await api.get(`/history/${pdfId}`);
-      const formattedHistory = (res.data.history || []).map((msg) => ({
-        ...msg,
-        role: msg.role === "bot" ? "assistant" : msg.role,
-        sources: msg.sources || [],
-      }));
-      setMessages(formattedHistory);
-      setSummary(doc?.summary || "No summary available.");
-      
-      console.log("[DEBUG] Fetched history:", formattedHistory);
-
-      if (window.innerWidth >= 1280) setIsSummaryOpen(true);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  // const onFileChange = async (e) => {
-  //   const file = e.target.files[0];
-  //   if (!file) return;
-  //   setUploading(true);
-  //   const formData = new FormData();
-  //   formData.append("file", file);
-
-  //   try {
-  //     const res = await api.post("/upload", formData, {
-  //       headers: { "Content-Type": "multipart/form-data" },
-  //     });
-  //     const newDoc = {
-  //       pdf_id: res.data.pdf_id,
-  //       title: res.data.title,
-  //       file_name: res.data.file_name,
-  //       summary: res.data.summary,
-  //     };
-  //     setDocuments([newDoc, ...documents]);
-  //     setActiveDoc(newDoc);
-  //     setSummary(res.data.summary);
-  //     setMessages([]);
-  //     setIsSummaryOpen(true);
-  //   } catch (err) {
-  //     alert("Failed to upload PDF");
-  //   } finally {
-  //     setUploading(false);
-  //     if (fileInputRef.current) fileInputRef.current.value = "";
-  //   }
-  // };
-
+  // Chat Handler
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!inputMessage.trim() || !activeDoc) return;
 
-    const currentQ = inputMessage;
+    const question = inputMessage;
     setInputMessage("");
-    setMessages((prev) => [...prev, { role: "user", content: currentQ }]);
+
+    setMessages((prev) => [...prev, { role: "user", content: question }]);
     setLoading(true);
 
     try {
       const res = await api.post("/chat", {
         pdf_id: activeDoc.pdf_id,
-        question: currentQ,
+        question,
         study_mode: isStudyMode,
       });
+
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: res.data.answer, sources: res.data.sources || [] },
+        {
+          role: "assistant",
+          content: res.data.answer,
+          sources: res.data.source_documents || res.data.sources || [],
+        },
       ]);
     } catch (err) {
+      console.error(err);
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: "Error getting response." },
@@ -166,26 +151,28 @@ export default function ChatPage() {
     }
   };
 
+  // Delete Document
   const handleDeleteDocument = async (pdfId) => {
     if (!window.confirm("Delete this document?")) return;
+
     try {
       await api.delete(`/document/${pdfId}`);
       setDocuments((docs) => docs.filter((d) => d.pdf_id !== pdfId));
-      if (activeDoc && activeDoc.pdf_id === pdfId) {
+
+      if (activeDoc?.pdf_id === pdfId) {
         setActiveDoc(null);
         setMessages([]);
       }
     } catch (err) {
+      console.error("Could not delete PDF");
       alert("Could not delete.");
     }
   };
 
-  // const handleNewChatClick = () => {
-  //   fileInputRef.current?.click();
-  // };
-
+  // UI Layout
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden relative text-slate-900 font-sans">
+      {/* Hidden File Input */}
       <input
         type="file"
         ref={fileInputRef}
@@ -206,11 +193,9 @@ export default function ChatPage() {
       />
 
       <main
-        className={`
-          flex-1 flex flex-col h-full transition-all duration-300 ease-in-out bg-white
-          ${isSidebarOpen ? "lg:ml-72" : "lg:ml-0"} 
-          ${isSummaryOpen ? "xl:mr-96" : "xl:mr-0"}
-        `}
+        className={`flex-1 flex flex-col h-full transition-all duration-300 bg-white 
+        ${isSidebarOpen ? "lg:ml-72" : "lg:ml-0"} 
+        ${isSummaryOpen ? "xl:mr-96" : "xl:mr-0"}`}
       >
         <ChatHeader
           isSidebarOpen={isSidebarOpen}
@@ -220,14 +205,7 @@ export default function ChatPage() {
           setIsSummaryOpen={setIsSummaryOpen}
         />
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar scroll-smooth bg-slate-50/50">
-          {/* <ChatMessageList
-            activeDoc={activeDoc}
-            messages={messages}
-            loading={loading}
-            uploading={uploading}
-            onUploadClick={handleNewChatClick}
-          /> */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar bg-slate-50/50">
           <ChatMessageList
             activeDoc={activeDoc}
             messages={messages}
