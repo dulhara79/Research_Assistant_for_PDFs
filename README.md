@@ -35,7 +35,7 @@ pip install --upgrade pip
 pip install -r server/requirements.txt
 
 # start server (development)
-uvicorn server.api.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn server.api.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 The API will be available at `http://localhost:8000/`.
@@ -45,7 +45,10 @@ Quick start — frontend (PowerShell)
 ```powershell
 cd client
 npm install
-npm run dev
+// start dev server bound to localhost on a port you choose
+// example (used with Nginx during development):
+// npm run dev -- --host 127.0.0.1 --port 5173
+npm run dev -- --host 127.0.0.1 --port 5173
 ```
 
 Open the Vite dev URL (usually `http://localhost:5173`) to use the UI. The client expects the backend at `http://localhost:8000` by default.
@@ -123,6 +126,37 @@ Development notes
   - `npm run dev` — start Vite dev server
   - `npm run build` — build production files
   - `npm run preview` — preview the production build
+
+Nginx / local load-balancing (developer notes)
+
+- You can run multiple frontend dev servers on different ports (for example `5173`, `5174`, `5175`) and proxy them with `nginx` for testing load-balancing or routing scenarios.
+- Frontend example commands (pick a port):
+
+```powershell
+# from `client/` folder
+npm run dev -- --host 127.0.0.1 --port 5173
+npm run dev -- --host 127.0.0.1 --port 5174
+npm run dev -- --host 127.0.0.1 --port 5175
+```
+
+- Backend example commands (you can run multiple uvicorn instances on different ports):
+
+```powershell
+uvicorn server.api.main:app --reload --host 127.0.0.1 --port 8000
+uvicorn server.api.main:app --reload --host 127.0.0.1 --port 8001
+uvicorn server.api.main:app --reload --host 127.0.0.1 --port 8002
+```
+
+- To run Nginx on Windows (from the extracted nginx folder):
+
+```powershell
+# from the folder that contains `nginx.exe`
+.\nginx.exe
+# stop Nginx (example)
+taskkill /F /IM nginx.exe
+```
+
+- If you're proxying the frontend or backend through Nginx, update the `nginx.conf` accordingly and restart `nginx.exe` after changes.
 
 Troubleshooting & tips
 
