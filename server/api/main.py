@@ -12,9 +12,19 @@ from server.utils.config import DOTENV_PATH, GEMINAI_API_KEY, GEMINAI_MODEL, EMB
 
 app = FastAPI(title="Research Assistant API")
 
+ALLOWED_ORIGINS = [
+    "http://localhost",
+    "http://localhost:80",
+    "http://127.0.0.1",
+    "http://127.0.0.1:80",
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:5175",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -9,8 +9,15 @@ import {
   CheckCircle2,
   Cpu,
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 export default function LandingPage() {
+  const { user, logout } = useAuth();
+
+  const handleLogoutClick = async () => {
+    await logout();
+  };
+
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-indigo-100">
       {/* --- Navbar --- */}
@@ -45,18 +52,38 @@ export default function LandingPage() {
           </div>
 
           <div className="flex items-center gap-4">
-            <Link
-              to="/login"
-              className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
-            >
-              Log in
-            </Link>
-            <Link
-              to="/register"
-              className="px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-full hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
-            >
-              Get Started
-            </Link>
+            {console.log("Current user in LandingPage:", !user)}
+            {user ? (
+              <>
+                <Link
+                  to="/chat"
+                  className="px-4 py-2 bg-indigo-900 text-white text-sm font-bold rounded-full hover:bg-black transition-colors shadow-lg shadow-indigo-200"
+                >
+                  Chat with ScholarSense
+                </Link>
+                <button
+                  onClick={handleLogoutClick}
+                  className="px-4 py-2 bg-red-800 text-white text-sm font-bold rounded-full hover:bg-red-600 transition-colors shadow-lg shadow-indigo-200"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                >
+                  Log in
+                </Link>
+                <Link
+                  to="/register"
+                  className="px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-full hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
+                >
+                  Get Started
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </nav>
