@@ -65,9 +65,24 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={{ user, login, register, logout, loading, verifyOtp }}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const ctx = useContext(AuthContext);
+  if (!ctx) {
+    // Return a safe default so components don't crash if AuthProvider
+    // isn't mounted (helps during dev or mis-wiring of providers)
+    return {
+      user: null,
+      loading: true,
+      login: async () => {},
+      register: async () => {},
+      logout: async () => {},
+      verifyOtp: async () => {},
+    };
+  }
+  return ctx;
+};
