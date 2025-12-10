@@ -43,11 +43,11 @@ async def register_user(user: UserCreateSchema, background_tasks: BackgroundTask
 
     await db_instance.db["users"].insert_one(user_dict)
 
-    # 3. Send OTP Email
+    # 3. Send OTP Email (use the full HTML registration template)
     message = MessageSchema(
         subject="Verify your account",
         recipients=[user.email],
-        body=f"<h3>Welcome! Your verification code is:</h3> <h1>{otp_code}</h1>",
+        body=registrationTemplate(otp_code),
         subtype=MessageType.html
     )
     fm = FastMail(conf)
