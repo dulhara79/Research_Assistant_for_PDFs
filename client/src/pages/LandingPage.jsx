@@ -52,7 +52,7 @@ export default function LandingPage() {
           </div>
 
           <div className="flex items-center gap-4">
-            {console.log("Current user in LandingPage:", !user)}
+            {/* {console.log("Current user in LandingPage:", !user)} */}
             {user ? (
               <>
                 <Link
