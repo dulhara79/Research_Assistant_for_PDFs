@@ -1,0 +1,30 @@
+# Git
+.git
+.gitignore
+.github
+
+# Python / Virtual Environment
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+venv/
+env/
+.venv/
+
+# Environment Variables & Secrets (CRITICAL)
+.env
+.env.local
+
+# IDE / Editor
+.idea/
+.vscode/
+.DS_Store
+
+# Local Data
+# (Since your code creates this folder on startup, we don't need to copy local test PDFs)
+data/
+
+# Docker
+Dockerfile
+.dockerignore
