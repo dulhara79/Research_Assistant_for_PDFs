@@ -23,4 +23,5 @@ wikipedia
 duckduckgo-search
 langchain-tools
 ddgs
-python-jose
+python-jose[cryptography]
+passlib[bcrypt]
