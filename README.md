@@ -1,3 +1,12 @@
+---
+title: Research Assistant Backend
+emoji: 🤖
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+---
+
 # Research Assistant for PDFs
 
 Research Assistant for PDFs is a full-stack prototype that helps you upload, process, embed, and query PDF documents using retrieval-augmented generation (RAG). It contains:
@@ -12,6 +21,7 @@ This README explains how to set up and run the project locally on Windows (Power
 - Store embeddings in `data/vector_db` (Chroma-backed SQLite store)
 - Query documents with a conversational interface (chat + source traces)
 - Optional MongoDB to persist users, document metadata and chat history
+ - Study Mode: set `study_mode` (client) to `true` and the backend will augment PDF context with external information fetched from Wikipedia and DuckDuckGo (see `server/utils/llm.get_external_context`) to produce teaching-style, explanatory answers.
 
 **Repository layout (short)**
 - `server/` — FastAPI backend (API routes, utils, schema)
@@ -168,3 +178,14 @@ Troubleshooting & tips
 License
 
 See the `LICENSE` file at the repository root.
+
+Documentation
+-------------
+Additional, focused documentation is available in the `docs/` directory:
+
+- `docs/overview.md` — high-level architecture and component map.
+- `docs/backend_rag.md` — detailed explanation of the backend RAG pipeline (ingest, embeddings, Chroma, retrieval, evaluation).
+- `docs/features.md` — user-facing features and where they are implemented (OTP, summary, download, chat, history).
+- `docs/developer_guide.md` — run instructions, environment variables, and developer tips.
+
+Read these documents for deeper information about the OTP flow, PDF summary generation, client-side PDF download, and the RAG evaluation loop.

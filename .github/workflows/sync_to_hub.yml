@@ -16,4 +16,5 @@ jobs:
       - name: Push to hub
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: git push --force https://dulharakaushalya:$HF_TOKEN@huggingface.co/spaces/dulharakaushalya/Research_Assistant_for_PDFs:main
+        run: git push --force https://dulharakaushalya:$HF_TOKEN@huggingface.co/spaces/dulharakaushalya/Research_Assistant_for_PDFs dev/hugging_face:main
+
