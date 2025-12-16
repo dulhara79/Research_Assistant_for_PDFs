@@ -15,7 +15,7 @@ import axios from 'axios';
 //})
 
 const api = axios.create({
-  baseURL: "https://dulharakaushalya-research-assistant-for-pdfs.hf.space",
+  baseURL: "10.16.21.26:*",
   headers: {
     "Content-Type": "application/json",
   }
