@@ -7,8 +7,15 @@ import axios from 'axios';
 //   },
 // });
 
+//const api = axios.create({
+//  baseURL: "http://localhost/api",
+//  headers: {
+//    "Content-Type": "application/json",
+//  }
+//})
+
 const api = axios.create({
-  baseURL: "http://localhost/api",
+  baseURL: "https://dulharakaushalya-research-assistant-for-pdfs.hf.space",
   headers: {
     "Content-Type": "application/json",
   }
