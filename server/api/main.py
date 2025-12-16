@@ -13,6 +13,7 @@ from server.utils.config import DOTENV_PATH, GEMINAI_API_KEY, GEMINAI_MODEL, EMB
 app = FastAPI(title="Research Assistant API")
 
 ALLOWED_ORIGINS = [
+    "https://scholarsense-researchassistantai.netlify.app",
     "http://localhost",
     "http://localhost:80",
     "http://127.0.0.1",
