@@ -25,3 +25,4 @@ langchain-tools
 ddgs
 python-jose[cryptography]
 passlib[bcrypt]
+argon2-cffi==23.1.0

@@ -13,7 +13,8 @@ from server.utils.config import JWT_SECRET_KEY, JWT_ALGORITHM, JWT_EXPIRATION_MI
 # key = Fernet.generate_key()
 cipher_suite = Fernet(ENCRYPTION_KEY)
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 
 def verify_password(plain_password, hashed_password):
